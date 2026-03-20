@@ -3,38 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wolt App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
-            transition: background-color 0.3s;
-        }
-        h1, h2, h3 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            background: white;
-            border-radius: 8px;
-            transition: transform 0.2s;
-        }
-        .container:hover {
-            transform: scale(1.01);
-        }
-    </style>
+    <title>Delivery Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to Wolt App!</h1>
-        <p>Experience the upgraded interface with modern design, better typography, animations, gamification elements, improved responsiveness, and better visual feedback.</p>
-    </div>
+    <header>
+        <h1>Delivery Calculation Dashboard</h1>
+    </header>
+    <main>
+        <section id="delivery-calculator">
+            <h2>Calculate Delivery</h2>
+            <form id="calculator-form">
+                <label for="distance">Distance (km):</label>
+                <input type="number" id="distance" required>
+                <label for="weight">Weight (kg):</label>
+                <input type="number" id="weight" required>
+                <button type="submit">Calculate</button>
+            </form>
+            <div id="calculation-result"></div>
+        </section>
+        <section id="history">
+            <h2>Delivery History</h2>
+            <ul id="history-list"></ul>
+        </section>
+    </main>
+    <script>
+        document.getElementById('calculator-form').addEventListener('submit', calculateDelivery);
+        let history = [];
+
+        function calculateDelivery(event) {
+            event.preventDefault();
+            const distance = parseFloat(document.getElementById('distance').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const cost = (distance * 1.5) + (weight * 2);
+            const resultDiv = document.getElementById('calculation-result');
+            resultDiv.textContent = `Estimated Delivery Cost: $${cost.toFixed(2)}`;
+            history.push(`Distance: ${distance} km, Weight: ${weight} kg, Cost: $${cost.toFixed(2)}`);
+            updateHistory();
+        }
+
+        function updateHistory() {
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            history.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                historyList.appendChild(li);
+            });
+        }
+    </script>
 </body>
 </html>
