@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#121212" id="themeColorMeta">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Wolt Ultimate V7</title>
+    <title>Wolt V8 Bulletproof</title>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -19,7 +19,6 @@
         * { box-sizing: border-box; font-family: 'Heebo', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 80px; overflow-x: hidden; }
         
-        /* Header */
         header { background: linear-gradient(135deg, #1e1e1e, #121212); padding: 20px 20px 15px; text-align: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
         header h1 { margin: 0; font-size: 22px; font-weight: 800; color: var(--primary); letter-spacing: 1px;}
         
@@ -29,18 +28,16 @@
         .btn-shift.active { background: var(--danger); }
         .btn-pause { background: var(--warning); color: #333; display: none; }
 
-        /* Navigation Tabs */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); display: flex; justify-content: space-around; padding: 12px 10px 20px; box-shadow: var(--shadow); z-index: 100; border-top: 1px solid var(--border); }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); display: flex; justify-content: space-around; padding: 12px 10px 20px; box-shadow: var(--shadow); z-index: 100; border-top: 1px solid var(--border); transition: transform 0.3s ease; }
+        .bottom-nav.nav-hidden { transform: translateY(100%); }
         .nav-item { color: var(--text-light); text-align: center; font-size: 12px; font-weight: 600; cursor: pointer; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: 0.2s; }
         .nav-item.active { color: var(--primary); }
         .nav-icon { font-size: 22px; }
 
-        /* Sections */
         .section { display: none; padding: 15px; max-width: 500px; margin: 0 auto; animation: fadeIn 0.3s; }
         .section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Cards & Inputs */
         .card { background: var(--surface); border-radius: var(--radius); padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
         .form-group { margin-bottom: 16px; position: relative; }
         label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--text-light); }
@@ -50,7 +47,6 @@
         .input-row { display: flex; gap: 12px; }
         .input-row .form-group { flex: 1; }
 
-        /* Special Buttons */
         .gps-btn { position: absolute; left: 10px; top: 32px; background: rgba(0, 194, 232, 0.1); color: var(--primary); border: 1px solid var(--primary); padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .toggle-btn { background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 15px; width: 100%; }
         .toggle-btn.active { background: rgba(0, 194, 232, 0.1); border-color: var(--primary); color: var(--primary); }
@@ -78,7 +74,6 @@
         .bad-job { background: rgba(255, 118, 117, 0.1); border: 1px solid var(--danger); }
         .rate-text { font-size: 38px; font-weight: 800; margin: 10px 0; color: var(--text); text-shadow: 0 2px 10px rgba(0,0,0,0.5);}
 
-        /* Dashboard Styles */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;}
         .stat-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
         .stat-value { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
@@ -207,7 +202,7 @@
             <input type="number" id="setTargetRate" value="120">
         </div>
         <div class="form-group">
-            <label>⛽ עלות בלאי ודלק לק"מ (מכויל לטויוטה יאריס 2004):</label>
+            <label>⛽ עלות בלאי ודלק לק"מ (₪):</label>
             <input type="number" id="setCostKm" value="0.85" step="0.01">
         </div>
         <div class="form-group" style="display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.2); padding:15px; border-radius:10px; border:1px solid var(--border);">
@@ -235,9 +230,9 @@
 </div>
 
 <script>
-    // System Config
+    // --- הגדרות ליבה ומניעת קריסות (Bulletproof) ---
     let USER_TARGET_RATE = 120;
-    let USER_COST_KM = 0.85; // Calibrated specifically for older efficient cars like Yaris 2004
+    let USER_COST_KM = 0.85; 
     let VOICE_ENABLED = true;
     
     let shiftData = [];
@@ -246,31 +241,42 @@
     let debounceTimer; let isBatchedMode = false;
     let isRain = false; let isStairs = false;
 
-    // Shift Timer
     let shiftAccumulatedTime = 0; let shiftCurrentStart = null; let shiftInterval; let isShiftPaused = false;
 
     window.onload = () => {
-        if(localStorage.getItem('woltTargetRate')) USER_TARGET_RATE = parseFloat(localStorage.getItem('woltTargetRate'));
-        if(localStorage.getItem('woltCostKm')) USER_COST_KM = parseFloat(localStorage.getItem('woltCostKm'));
-        if(localStorage.getItem('woltVoice') !== null) VOICE_ENABLED = localStorage.getItem('woltVoice') === 'true';
-        
-        document.getElementById('setTargetRate').value = USER_TARGET_RATE;
-        document.getElementById('setCostKm').value = USER_COST_KM;
-        document.getElementById('setVoice').checked = VOICE_ENABLED;
+        try {
+            if(localStorage.getItem('woltTargetRate')) USER_TARGET_RATE = parseFloat(localStorage.getItem('woltTargetRate'));
+            if(localStorage.getItem('woltCostKm')) USER_COST_KM = parseFloat(localStorage.getItem('woltCostKm'));
+            if(localStorage.getItem('woltVoice') !== null) VOICE_ENABLED = localStorage.getItem('woltVoice') === 'true';
+            
+            document.getElementById('setTargetRate').value = USER_TARGET_RATE;
+            document.getElementById('setCostKm').value = USER_COST_KM;
+            document.getElementById('setVoice').checked = VOICE_ENABLED;
 
-        const savedData = localStorage.getItem('woltShiftDataV7');
-        if (savedData) shiftData = JSON.parse(savedData);
-        
-        const savedAccumulated = localStorage.getItem('woltAccumTimeV7');
-        const savedStart = localStorage.getItem('woltShiftStartV7');
-        const savedPaused = localStorage.getItem('woltShiftPausedV7');
-        
-        if(savedAccumulated) shiftAccumulatedTime = parseInt(savedAccumulated);
-        if(savedPaused === 'true') { isShiftPaused = true; updateShiftUI(true, true); } 
-        else if (savedStart) { shiftCurrentStart = parseInt(savedStart); startShiftClockUI(); }
+            const savedData = localStorage.getItem('woltShiftDataV8');
+            if (savedData) shiftData = JSON.parse(savedData);
+            
+            const savedAccumulated = localStorage.getItem('woltAccumTimeV8');
+            const savedStart = localStorage.getItem('woltShiftStartV8');
+            const savedPaused = localStorage.getItem('woltShiftPausedV8');
+            
+            if(savedAccumulated) shiftAccumulatedTime = parseInt(savedAccumulated);
+            if(savedPaused === 'true') { isShiftPaused = true; updateShiftUI(true, true); } 
+            else if (savedStart) { shiftCurrentStart = parseInt(savedStart); startShiftClockUI(); }
+        } catch(e) {
+            console.error("שגיאה בטעינת נתונים, מתחיל משמרת נקייה.", e);
+            shiftData = [];
+        }
 
         updateDashboard();
         
+        // תיקון באג מקלדת (מסתיר תפריט תחתון בזמן הקלדה)
+        const bottomNav = document.querySelector('.bottom-nav');
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => bottomNav.classList.add('nav-hidden'));
+            input.addEventListener('blur', () => setTimeout(() => bottomNav.classList.remove('nav-hidden'), 150));
+        });
+
         document.addEventListener('click', function(e) {
             if(e.target.id !== 'origin') document.getElementById('origin-list').style.display = 'none';
             if(e.target.id !== 'destination') document.getElementById('dest-list').style.display = 'none';
@@ -296,29 +302,27 @@
         localStorage.setItem('woltVoice', VOICE_ENABLED);
         
         alert("הגדרות נשמרו בהצלחה!");
+        window.scrollTo(0,0);
         switchTab('calc');
     }
 
-    // --- Voice Engine ---
+    // הקראה קולית 
     function speakText(text) {
         if(!VOICE_ENABLED || !window.speechSynthesis) return;
-        window.speechSynthesis.cancel(); // Clear queue
+        window.speechSynthesis.cancel(); 
         const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'he-IL';
-        msg.rate = 1.1; // slightly faster
+        msg.lang = 'he-IL'; msg.rate = 1.1; 
         window.speechSynthesis.speak(msg);
     }
 
-    // --- GPS Auto Location ---
+    // מיקום חכם וניקוי פסיקים מ-GPS
     function getLocation() {
         const btn = document.querySelector('.gps-btn');
         btn.innerText = "מחפש...";
         
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(async function(position) {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                
+                const lat = position.coords.latitude; const lon = position.coords.longitude;
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
                     const data = await res.json();
@@ -326,7 +330,11 @@
                         const street = data.address.road || data.address.pedestrian || "";
                         const house = data.address.house_number || "";
                         const city = data.address.city || data.address.town || "";
-                        const fullAddress = `${street} ${house}, ${city}`.trim().replace(/^,/, '').trim();
+                        
+                        // פילטר שמנקה רווחים ופסיקים ריקים
+                        const fullAddress = [street + " " + house, city]
+                            .filter(p => p.trim() !== "")
+                            .join(', ').replace(/\s+/g, ' ').trim();
                         
                         document.getElementById('origin').value = fullAddress || "מיקום נוכחי";
                         originCoords = {lat: lat, lon: lon};
@@ -334,26 +342,20 @@
                         setTimeout(() => btn.innerText = "🎯 מיקום שלי", 2000);
                     }
                 } catch(e) {
-                    btn.innerText = "❌ שגיאה";
-                    setTimeout(() => btn.innerText = "🎯 מיקום שלי", 2000);
+                    btn.innerText = "❌ שגיאה"; setTimeout(() => btn.innerText = "🎯 מיקום שלי", 2000);
                 }
             }, function(error) {
                 alert("לא ניתן לגשת ל-GPS. ודא ששירותי מיקום דולקים.");
                 btn.innerText = "🎯 מיקום שלי";
             }, { timeout: 10000 });
-        } else {
-            alert("הדפדפן שלך לא תומך ב-GPS.");
-            btn.innerText = "🎯 מיקום שלי";
         }
     }
 
-    // --- Shift Timer ---
+    // שעון המשמרת 
     function toggleShift() {
         if(shiftCurrentStart !== null || isShiftPaused) {
-            clearInterval(shiftInterval);
-            shiftAccumulatedTime = 0; shiftCurrentStart = null; isShiftPaused = false;
-            saveTimerState();
-            document.getElementById('shiftTimerDisplay').innerText = "00:00:00";
+            clearInterval(shiftInterval); shiftAccumulatedTime = 0; shiftCurrentStart = null; isShiftPaused = false;
+            saveTimerState(); document.getElementById('shiftTimerDisplay').innerText = "00:00:00";
             updateShiftUI(false, false); updateDashboard(); 
         } else {
             shiftAccumulatedTime = 0; shiftCurrentStart = Date.now(); isShiftPaused = false;
@@ -401,9 +403,11 @@
     }
 
     function saveTimerState() {
-        localStorage.setItem('woltAccumTimeV7', shiftAccumulatedTime);
-        if(shiftCurrentStart) localStorage.setItem('woltShiftStartV7', shiftCurrentStart); else localStorage.removeItem('woltShiftStartV7');
-        localStorage.setItem('woltShiftPausedV7', isShiftPaused);
+        try {
+            localStorage.setItem('woltAccumTimeV8', shiftAccumulatedTime);
+            if(shiftCurrentStart) localStorage.setItem('woltShiftStartV8', shiftCurrentStart); else localStorage.removeItem('woltShiftStartV8');
+            localStorage.setItem('woltShiftPausedV8', isShiftPaused);
+        } catch(e){}
     }
 
     function getTotalShiftHours() {
@@ -412,11 +416,10 @@
         return totalMs / (1000 * 60 * 60);
     }
 
-    // --- Inputs & Calculation ---
+    // ניהול הזנות נתונים
     function toggleBatched() {
         isBatchedMode = !isBatchedMode;
-        const btn = document.getElementById('batchedToggle');
-        const group = document.getElementById('dest2-group');
+        const btn = document.getElementById('batchedToggle'); const group = document.getElementById('dest2-group');
         if(isBatchedMode) { btn.classList.add('active'); btn.innerText = "- הסר יעד 2"; group.style.display = 'block'; } 
         else { btn.classList.remove('active'); btn.innerText = "+ הוסף יעד 2 (משלוח כפול)"; group.style.display = 'none'; dest2Coords = null; document.getElementById('destination2').value = ''; }
     }
@@ -476,6 +479,9 @@
 
         const btn = document.getElementById('calcBtn');
         btn.disabled = true; btn.innerText = 'מחשב...';
+
+        // חימום מנוע הקראה לאייפון ולניידים מוגבלים
+        if(VOICE_ENABLED && window.speechSynthesis) window.speechSynthesis.resume();
 
         try {
             let url = `https://router.project-osrm.org/route/v1/driving/${originCoords.lon},${originCoords.lat};${dest1Coords.lon},${dest1Coords.lat}`;
@@ -552,7 +558,7 @@
     function saveDelivery() {
         if(!currentDelivery) return;
         shiftData.push(currentDelivery);
-        localStorage.setItem('woltShiftDataV7', JSON.stringify(shiftData));
+        try { localStorage.setItem('woltShiftDataV8', JSON.stringify(shiftData)); } catch(e){}
         
         if(!shiftCurrentStart && !isShiftPaused) toggleShift(); 
 
@@ -566,7 +572,7 @@
         if(isRain) toggleCondition('condRain'); if(isStairs) toggleCondition('condStairs');
         originCoords = null; dest1Coords = null; dest2Coords = null; currentDelivery = null;
         
-        speakText("נשמר בהצלחה.");
+        speakText("נשמר.");
     }
 
     function addExpense() {
@@ -575,8 +581,9 @@
         const desc = prompt("על מה ההוצאה? (למשל: דלק, קפה)") || "הוצאה כללית";
         
         shiftData.push({ type: 'expense', desc: desc, netPay: -Math.abs(amt), time: 0, distKm: 0 });
-        localStorage.setItem('woltShiftDataV7', JSON.stringify(shiftData));
+        try { localStorage.setItem('woltShiftDataV8', JSON.stringify(shiftData)); } catch(e){}
         updateDashboard();
+        switchTab('dash');
     }
 
     function updateDashboard() {
@@ -585,7 +592,9 @@
         for(let i = shiftData.length - 1; i >= 0; i--) {
             let item = shiftData[i];
             totalNetPay += item.netPay;
-            if(item.distKm) totalKm += item.distKm;
+            // Fallback לנתונים ישנים למניעת תצוגת NaN
+            const distToAdd = item.distKm || parseFloat(item.dist) || 0;
+            totalKm += distToAdd;
             
             if(item.type === 'expense') {
                 historyHTML += `
@@ -598,7 +607,7 @@
                     <li class="history-item">
                         <div>
                             <div style="font-weight:600; font-size:14px; color:var(--text);">${item.notes||''}${item.origin} ➔ ${item.dest}</div>
-                            <div style="font-size:12px; color:var(--text-light);">קצב: ₪${item.rate}/שעה | מרחק: ${item.dist} ק"מ</div>
+                            <div style="font-size:12px; color:var(--text-light);">קצב: ₪${item.rate}/שעה | מרחק: ${distToAdd.toFixed(1)} ק"מ</div>
                         </div>
                         <div style="font-size:16px; font-weight:800; color:var(--primary);">₪${item.netPay.toFixed(0)}</div>
                     </li>`;
@@ -617,12 +626,13 @@
 
     function endShift() {
         if(shiftData.length === 0) { alert("אין נתונים למשמרת זו."); return; }
-        if(!confirm("האם אתה בטוח שברצונך לסיים את המשמרת ולאפס נתונים?")) return;
+        if(!confirm("האם אתה בטוח שברצונך לסיים את המשמרת ולהעביר את הדו״ח לוואטסאפ? הנתונים יאופסו.")) return;
 
         let totalNet = 0; let count = 0; let expenses = 0; let totalKm = 0;
         shiftData.forEach(i => { 
             totalNet += i.netPay; 
-            if(i.distKm) totalKm += i.distKm;
+            const distToAdd = i.distKm || parseFloat(i.dist) || 0;
+            totalKm += distToAdd;
             if(i.type==='delivery') count++; 
             if(i.type==='expense') expenses += Math.abs(i.netPay);
         });
@@ -642,7 +652,7 @@
         const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
         
         shiftData = []; 
-        localStorage.removeItem('woltShiftDataV7'); 
+        try { localStorage.removeItem('woltShiftDataV8'); } catch(e){}
         if(shiftCurrentStart || isShiftPaused) toggleShift(); 
         updateDashboard();
         
