@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#00c2e8" id="themeColorMeta">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Wolt 18K V5 Pro</title>
+    <title>Wolt 18K V6 Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -27,12 +27,14 @@
         header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 20px 15px; text-align: center; border-radius: 0 0 24px 24px; box-shadow: var(--shadow); position: relative; }
         header h1 { margin: 0; font-size: 24px; font-weight: 800; }
         .theme-toggle { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.2); border: none; color: white; padding: 6px 10px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .settings-toggle { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.2); border: none; color: white; padding: 6px 10px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 12px; }
 
         /* Shift Clock Display */
-        .shift-clock-container { margin-top: 10px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .shift-time { font-size: 18px; font-weight: bold; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
-        .btn-shift { background: var(--success); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .shift-clock-container { margin-top: 10px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 12px; display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .shift-time { font-size: 18px; font-weight: bold; font-variant-numeric: tabular-nums; letter-spacing: 1px; min-width: 80px; text-align: center; }
+        .btn-shift { background: var(--success); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; }
         .btn-shift.active { background: var(--danger); }
+        .btn-pause { background: var(--warning); color: #333; display: none; }
 
         .container { padding: 0 15px; max-width: 500px; margin: 15px auto 0; position: relative; z-index: 20; }
         .card { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-top: 10px; border: 1px solid var(--border); }
@@ -45,15 +47,16 @@
         .toggle-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-bottom: 15px; width: 100%; }
         .toggle-btn.active { background: rgba(0, 194, 232, 0.1); border-color: var(--primary); color: var(--primary); }
         
-        #dest2-group { display: none; } /* מוסתר כברירת מחדל */
+        #dest2-group { display: none; } 
 
         .quick-btns { display: flex; gap: 5px; margin-top: 5px; }
         .quick-btn { flex: 1; padding: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-weight: bold; font-size: 14px; cursor: pointer; }
         .quick-btn:active { background: var(--primary); color: white; }
-        .timer-btn { background: rgba(0, 194, 232, 0.1); color: var(--primary); border: 1px solid var(--primary); }
-        .timer-btn.active { background: var(--danger); color: white; border-color: var(--danger); animation: pulse 1.5s infinite; }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
+        /* Conditions Row */
+        .conditions-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .condition-pill { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text-light); padding: 8px; border-radius: 8px; font-size: 13px; font-weight: bold; text-align: center; cursor: pointer; }
+        .condition-pill.active { background: rgba(253, 203, 110, 0.15); border-color: var(--warning); color: var(--warning); }
 
         .autocomplete-list { list-style: none; padding: 0; margin: 0; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1000; display: none; max-height: 220px; overflow-y: auto; border: 1px solid var(--border); }
         .autocomplete-list li { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 15px; cursor: pointer; color: var(--text); }
@@ -69,7 +72,6 @@
         .good-job { background: rgba(0, 184, 148, 0.1); border: 1px solid var(--success); }
         .ok-job { background: rgba(253, 203, 110, 0.1); border: 1px solid var(--warning); }
         .bad-job { background: rgba(255, 118, 117, 0.1); border: 1px solid var(--danger); }
-        
         .rate-text { font-size: 36px; font-weight: 800; margin: 10px 0; color: var(--text); }
 
         .dashboard { background: #1e272e; color: white; padding: 24px 20px; border-radius: var(--radius); margin-top: 25px; }
@@ -84,17 +86,19 @@
         
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .modal-content { background: var(--surface); padding: 25px; border-radius: var(--radius); width: 90%; max-width: 400px; text-align: center; color: var(--text); }
-        .modal-content h3 { margin-top: 0; color: var(--primary); font-size: 22px; }
+        .modal-content h3 { margin-top: 0; color: var(--primary); font-size: 22px; margin-bottom: 20px;}
     </style>
 </head>
 <body>
 
 <header>
     <button class="theme-toggle" onclick="toggleDarkMode()">🌙 לילה</button>
-    <h1>🚀 18K Pro V5</h1>
+    <button class="settings-toggle" onclick="openSettings()">⚙️ הגדרות</button>
+    <h1>🚀 18K Pro V6</h1>
     
     <div class="shift-clock-container">
         <button id="shiftToggleBtn" class="btn-shift" onclick="toggleShift()">▶ התחל משמרת</button>
+        <button id="shiftPauseBtn" class="btn-shift btn-pause" onclick="pauseShift()">⏸ השהה</button>
         <div class="shift-time" id="shiftTimerDisplay">00:00:00</div>
     </div>
 </header>
@@ -126,6 +130,11 @@
                 <ul id="dest2-list" class="autocomplete-list"></ul>
             </div>
         </div>
+
+        <div class="conditions-row">
+            <div class="condition-pill" id="condRain" onclick="toggleCondition('condRain')">🌧️ גשם/פקקים (+25% זמן)</div>
+            <div class="condition-pill" id="condStairs" onclick="toggleCondition('condStairs')">🚶‍♂️ בלי מעלית (+4 דקות)</div>
+        </div>
         
         <div style="display: flex; gap: 12px;">
             <div class="form-group" style="flex: 1;">
@@ -140,12 +149,13 @@
                 <label>⏱️ המתנה (דק'):</label>
                 <input type="number" id="waitTime" value="0" inputmode="numeric">
                 <div class="quick-btns">
-                    <button id="timerBtn" class="quick-btn timer-btn" onclick="toggleWaitTimer()">⏱️ הפעל</button>
+                    <button class="quick-btn" onclick="adjustValue('waitTime', 5)">+5</button>
+                    <button class="quick-btn" onclick="adjustValue('waitTime', -5)">-5</button>
                 </div>
             </div>
         </div>
         
-        <button id="calcBtn" class="action-btn btn-primary" onclick="calculateDelivery()">חשב כדאיות</button>
+        <button id="calcBtn" class="action-btn btn-primary" onclick="calculateDelivery()">חשב כדאיות מול שטח</button>
     </div>
 
     <div id="resultBox" class="result-box">
@@ -155,9 +165,8 @@
         <div style="font-size: 14px; color: var(--text-light);">קצב רווח נקי מהמשלוח:</div>
         <div class="rate-text" id="resPerHour"></div>
         <div style="font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 10px;">
-            מרחק משוכלל: <span id="resDist"></span> | זמן: <span id="resTotalTime"></span>
+            מרחק משוכלל: <span id="resDist"></span> | זמן (כולל שטח): <span id="resTotalTime"></span>
         </div>
-        
         <button id="saveBtn" class="action-btn btn-success" onclick="saveDelivery()">📥 הוסף למשמרת</button>
     </div>
 
@@ -177,7 +186,7 @@
             </div>
             <div class="stat-box">
                 <div class="stat-value" id="dashRealAvg" style="color:#00b894;">₪0</div>
-                <div style="font-size:12px;">ממוצע אמיתי (לפי שעון)</div>
+                <div style="font-size:12px;">ממוצע לפי שעון</div>
             </div>
         </div>
 
@@ -185,10 +194,26 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal-content">
+        <h3>⚙️ הגדרות אישיות</h3>
+        <div class="form-group" style="text-align: right;">
+            <label>🎯 יעד שעתי לשאיפה (₪):</label>
+            <input type="number" id="setTargetRate" value="120">
+        </div>
+        <div class="form-group" style="text-align: right;">
+            <label>⛽ עלות בלאי/דלק לק"מ (₪):</label>
+            <input type="number" id="setCostKm" value="0.8" step="0.1">
+        </div>
+        <button class="action-btn btn-primary" onclick="saveSettings()">שמור הגדרות</button>
+        <button style="background:none; border:none; color:var(--text-light); margin-top:15px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('settingsModal').style.display='none'">ביטול</button>
+    </div>
+</div>
+
 <div class="modal-overlay" id="shiftModal">
     <div class="modal-content">
         <h3>🏆 סיכום משמרת</h3>
-        <p id="modalStats" style="font-size:16px; line-height:1.6; font-weight:600; margin-bottom: 20px;"></p>
+        <p id="modalStats" style="font-size:16px; line-height:1.6; font-weight:600; margin-bottom: 20px; text-align:right;"></p>
         <button class="action-btn btn-whatsapp" onclick="exportToWhatsapp()">📲 שלח גיבוי ל-WhatsApp</button>
         <button class="action-btn btn-primary" onclick="confirmEndShift()" style="margin-top: 10px;">מחק נתונים והתחל חדש</button>
         <button style="background:none; border:none; color:var(--text-light); margin-top:15px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('shiftModal').style.display='none'">חזור למשמרת</button>
@@ -196,8 +221,9 @@
 </div>
 
 <script>
-    const TARGET_HOURLY_RATE = 120; 
-    const COST_PER_KM = 0.8; 
+    // --- User Settings (Defaults) ---
+    let USER_TARGET_RATE = 120;
+    let USER_COST_KM = 0.8;
     
     let shiftData = [];
     let currentDelivery = null; 
@@ -207,24 +233,38 @@
     let debounceTimer;
     let isBatchedMode = false;
 
-    // Wait Timer Logic
-    let waitInterval;
-    let waitSeconds = 0;
-    let isWaitRunning = false;
+    // Toggles state
+    let isRain = false;
+    let isStairs = false;
 
-    // Shift Timer Logic
-    let shiftStartTime = null;
+    // Shift Timer Logic (With Pause)
+    let shiftAccumulatedTime = 0; // In milliseconds
+    let shiftCurrentStart = null; // timestamp
     let shiftInterval;
+    let isShiftPaused = false;
 
     window.onload = () => {
         if(localStorage.getItem('darkMode') === 'true') toggleDarkMode();
         
-        const savedData = localStorage.getItem('woltShiftDataV5');
+        // Load Settings
+        if(localStorage.getItem('woltTargetRate')) USER_TARGET_RATE = parseFloat(localStorage.getItem('woltTargetRate'));
+        if(localStorage.getItem('woltCostKm')) USER_COST_KM = parseFloat(localStorage.getItem('woltCostKm'));
+        
+        // Load Data
+        const savedData = localStorage.getItem('woltShiftDataV6');
         if (savedData) shiftData = JSON.parse(savedData);
         
-        const savedStartTime = localStorage.getItem('woltShiftStart');
-        if(savedStartTime) {
-            shiftStartTime = parseInt(savedStartTime);
+        // Load Timer State
+        const savedAccumulated = localStorage.getItem('woltAccumulatedTime');
+        const savedStart = localStorage.getItem('woltShiftStartV6');
+        const savedPaused = localStorage.getItem('woltShiftPaused');
+        
+        if(savedAccumulated) shiftAccumulatedTime = parseInt(savedAccumulated);
+        if(savedPaused === 'true') {
+            isShiftPaused = true;
+            updateShiftUI(true, true);
+        } else if (savedStart) {
+            shiftCurrentStart = parseInt(savedStart);
             startShiftClockUI();
         }
 
@@ -243,60 +283,137 @@
         localStorage.setItem('darkMode', isDark);
     }
 
-    // --- Shift Timer Functions ---
+    // --- Settings Logic ---
+    function openSettings() {
+        document.getElementById('setTargetRate').value = USER_TARGET_RATE;
+        document.getElementById('setCostKm').value = USER_COST_KM;
+        document.getElementById('settingsModal').style.display = 'flex';
+    }
+
+    function saveSettings() {
+        USER_TARGET_RATE = parseFloat(document.getElementById('setTargetRate').value) || 120;
+        USER_COST_KM = parseFloat(document.getElementById('setCostKm').value) || 0.8;
+        localStorage.setItem('woltTargetRate', USER_TARGET_RATE);
+        localStorage.setItem('woltCostKm', USER_COST_KM);
+        document.getElementById('settingsModal').style.display = 'none';
+        alert("הגדרות נשמרו! החישובים הבאים יהיו מעודכנים.");
+    }
+
+    // --- Shift Timer Functions (V6 with Pause) ---
     function toggleShift() {
-        if(shiftStartTime) {
-            // Stop shift
+        if(shiftCurrentStart !== null || isShiftPaused) {
+            // Stop entire shift
             clearInterval(shiftInterval);
-            shiftStartTime = null;
-            localStorage.removeItem('woltShiftStart');
+            shiftAccumulatedTime = 0;
+            shiftCurrentStart = null;
+            isShiftPaused = false;
+            saveTimerState();
+            
             document.getElementById('shiftTimerDisplay').innerText = "00:00:00";
-            const btn = document.getElementById('shiftToggleBtn');
-            btn.innerText = "▶ התחל משמרת";
-            btn.classList.remove('active');
-            updateDashboard(); // Recalculate based on 0 time
+            updateShiftUI(false, false);
+            updateDashboard(); 
         } else {
-            // Start shift
-            shiftStartTime = Date.now();
-            localStorage.setItem('woltShiftStart', shiftStartTime);
+            // Start fresh shift
+            shiftAccumulatedTime = 0;
+            shiftCurrentStart = Date.now();
+            isShiftPaused = false;
+            saveTimerState();
             startShiftClockUI();
         }
     }
 
+    function pauseShift() {
+        if(isShiftPaused) {
+            // Resume
+            shiftCurrentStart = Date.now();
+            isShiftPaused = false;
+            saveTimerState();
+            startShiftClockUI();
+        } else if (shiftCurrentStart) {
+            // Pause
+            clearInterval(shiftInterval);
+            shiftAccumulatedTime += (Date.now() - shiftCurrentStart);
+            shiftCurrentStart = null;
+            isShiftPaused = true;
+            saveTimerState();
+            updateShiftUI(true, true);
+        }
+    }
+
     function startShiftClockUI() {
-        const btn = document.getElementById('shiftToggleBtn');
-        btn.innerText = "⏹ סיים משמרת";
-        btn.classList.add('active');
-        
+        updateShiftUI(true, false);
         shiftInterval = setInterval(() => {
-            const diffSecs = Math.floor((Date.now() - shiftStartTime) / 1000);
+            const currentTotal = shiftAccumulatedTime + (shiftCurrentStart ? (Date.now() - shiftCurrentStart) : 0);
+            const diffSecs = Math.floor(currentTotal / 1000);
             const h = String(Math.floor(diffSecs / 3600)).padStart(2, '0');
             const m = String(Math.floor((diffSecs % 3600) / 60)).padStart(2, '0');
             const s = String(diffSecs % 60).padStart(2, '0');
             document.getElementById('shiftTimerDisplay').innerText = `${h}:${m}:${s}`;
             
-            // עדכון הממוצע האמיתי כל דקה
-            if(diffSecs % 60 === 0) updateDashboard();
+            if(diffSecs % 60 === 0) updateDashboard(); // update avg every minute
         }, 1000);
     }
 
-    // --- Batched Mode ---
+    function updateShiftUI(isActive, isPaused) {
+        const btnMain = document.getElementById('shiftToggleBtn');
+        const btnPause = document.getElementById('shiftPauseBtn');
+        const display = document.getElementById('shiftTimerDisplay');
+        
+        if(isActive) {
+            btnMain.innerText = "⏹ סיים משמרת";
+            btnMain.classList.add('active');
+            btnPause.style.display = 'block';
+            if(isPaused) {
+                btnPause.innerText = "▶ המשך";
+                btnPause.style.background = 'var(--success)';
+                btnPause.style.color = 'white';
+                display.style.opacity = '0.5';
+            } else {
+                btnPause.innerText = "⏸ השהה";
+                btnPause.style.background = 'var(--warning)';
+                btnPause.style.color = '#333';
+                display.style.opacity = '1';
+            }
+        } else {
+            btnMain.innerText = "▶ התחל משמרת";
+            btnMain.classList.remove('active');
+            btnPause.style.display = 'none';
+            display.style.opacity = '1';
+        }
+    }
+
+    function saveTimerState() {
+        localStorage.setItem('woltAccumulatedTime', shiftAccumulatedTime);
+        if(shiftCurrentStart) localStorage.setItem('woltShiftStartV6', shiftCurrentStart);
+        else localStorage.removeItem('woltShiftStartV6');
+        localStorage.setItem('woltShiftPaused', isShiftPaused);
+    }
+
+    function getTotalShiftHours() {
+        if(shiftAccumulatedTime === 0 && !shiftCurrentStart) return 0;
+        const totalMs = shiftAccumulatedTime + (shiftCurrentStart ? (Date.now() - shiftCurrentStart) : 0);
+        return totalMs / (1000 * 60 * 60);
+    }
+
+    // --- Toggles ---
     function toggleBatched() {
         isBatchedMode = !isBatchedMode;
         const btn = document.getElementById('batchedToggle');
         const group = document.getElementById('dest2-group');
         
         if(isBatchedMode) {
-            btn.classList.add('active');
-            btn.innerText = "- הסר יעד 2";
-            group.style.display = 'block';
+            btn.classList.add('active'); btn.innerText = "- הסר יעד 2"; group.style.display = 'block';
         } else {
-            btn.classList.remove('active');
-            btn.innerText = "+ הוסף יעד 2 (משלוח כפול)";
-            group.style.display = 'none';
-            dest2Coords = null;
-            document.getElementById('destination2').value = '';
+            btn.classList.remove('active'); btn.innerText = "+ הוסף יעד 2 (משלוח כפול)"; group.style.display = 'none';
+            dest2Coords = null; document.getElementById('destination2').value = '';
         }
+    }
+
+    function toggleCondition(id) {
+        const el = document.getElementById(id);
+        el.classList.toggle('active');
+        if(id === 'condRain') isRain = !isRain;
+        if(id === 'condStairs') isStairs = !isStairs;
     }
 
     function adjustValue(id, amount) {
@@ -304,35 +421,6 @@
         let val = parseFloat(el.value) || 0;
         val = Math.max(0, val + amount);
         el.value = val;
-    }
-
-    function toggleWaitTimer() {
-        const btn = document.getElementById('timerBtn');
-        const input = document.getElementById('waitTime');
-        
-        if(isWaitRunning) {
-            clearInterval(waitInterval);
-            isWaitRunning = false;
-            btn.innerText = '⏱️ הפעל';
-            btn.classList.remove('active');
-        } else {
-            waitSeconds = (parseFloat(input.value) || 0) * 60; 
-            isWaitRunning = true;
-            btn.classList.add('active');
-            
-            waitInterval = setInterval(() => {
-                waitSeconds++;
-                const mins = Math.floor(waitSeconds / 60);
-                input.value = mins;
-                btn.innerText = `🛑 (${mins}:${(waitSeconds%60).toString().padStart(2, '0')})`;
-            }, 1000);
-        }
-    }
-
-    function triggerHaptic(type) {
-        if (!navigator.vibrate) return;
-        if (type === 'good') navigator.vibrate([100, 50, 100]); 
-        else if (type === 'bad') navigator.vibrate(500); 
     }
 
     async function handleInput(inputEl, listId, type) {
@@ -363,8 +451,7 @@
                         const li = document.createElement('li');
                         li.innerHTML = `📍 ${name}`;
                         li.onclick = () => {
-                            inputEl.value = name;
-                            listEl.style.display = 'none';
+                            inputEl.value = name; listEl.style.display = 'none';
                             const coords = { lat: feature.geometry.coordinates[1], lon: feature.geometry.coordinates[0] };
                             if (type === 'origin') originCoords = coords; 
                             else if (type === 'dest1') dest1Coords = coords;
@@ -379,8 +466,6 @@
     }
 
     async function calculateDelivery() {
-        if(isWaitRunning) toggleWaitTimer(); 
-
         const pay = parseFloat(document.getElementById('pay').value);
         const waitTime = parseInt(document.getElementById('waitTime').value) || 0;
 
@@ -388,14 +473,11 @@
         if(isBatchedMode && !dest2Coords) { alert('בחר יעד 2 עבור המשלוח הכפול.'); return; }
 
         const btn = document.getElementById('calcBtn');
-        btn.disabled = true; btn.innerText = 'מחשב...';
+        btn.disabled = true; btn.innerText = 'מחשב מול שטח...';
 
         try {
-            // בניית הבקשה ללוויין בהתאם לכמות היעדים
             let url = `https://router.project-osrm.org/route/v1/driving/${originCoords.lon},${originCoords.lat};${dest1Coords.lon},${dest1Coords.lat}`;
-            if(isBatchedMode) {
-                url += `;${dest2Coords.lon},${dest2Coords.lat}`;
-            }
+            if(isBatchedMode) url += `;${dest2Coords.lon},${dest2Coords.lat}`;
             url += `?overview=false`;
 
             const routeResponse = await fetch(url);
@@ -405,8 +487,13 @@
             let distanceKm = routeData.routes[0].distance / 1000;
             let driveTimeMins = routeData.routes[0].duration / 60;
             
-            const totalTimeMins = Math.ceil(driveTimeMins + waitTime);
-            const netPay = pay - (distanceKm * COST_PER_KM);
+            // Apply Reality Conditions!
+            if(isRain) driveTimeMins *= 1.25; // 25% slower in rain/traffic
+            
+            let totalTimeMins = Math.ceil(driveTimeMins + waitTime);
+            if(isStairs) totalTimeMins += 4; // Flat 4 mins for no elevator / high floor
+
+            const netPay = pay - (distanceKm * USER_COST_KM);
             const hourlyRate = (netPay / totalTimeMins) * 60;
             
             let destTitle = document.getElementById('destination').value.split(',')[0].substring(0, 15);
@@ -420,7 +507,8 @@
                 netPay: netPay,
                 dist: distanceKm.toFixed(1),
                 time: totalTimeMins,
-                rate: Math.round(hourlyRate)
+                rate: Math.round(hourlyRate),
+                notes: (isRain ? '🌧️ ' : '') + (isStairs ? '🚶‍♂️ ' : '')
             };
             
             displayResults(currentDelivery);
@@ -428,7 +516,7 @@
         } catch (error) {
             alert(error.message);
         } finally {
-            btn.disabled = false; btn.innerText = 'חשב כדאיות';
+            btn.disabled = false; btn.innerText = 'חשב כדאיות מול שטח';
         }
     }
 
@@ -441,14 +529,14 @@
         const vText = document.getElementById('verdictText');
         const vIcon = document.getElementById('verdictIcon');
 
-        if(data.rate >= TARGET_HOURLY_RATE) {
+        if(data.rate >= USER_TARGET_RATE) {
             resultBox.className = 'result-box good-job'; vText.innerText = 'זהב! קח מהר'; vText.style.color = 'var(--success)'; vIcon.innerText = '🔥';
-            triggerHaptic('good');
-        } else if (data.rate >= 90) {
+            if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        } else if (data.rate >= (USER_TARGET_RATE * 0.75)) {
             resultBox.className = 'result-box ok-job'; vText.innerText = 'סביר בהחלט'; vText.style.color = '#d4a017'; vIcon.innerText = '👍';
         } else {
             resultBox.className = 'result-box bad-job'; vText.innerText = 'פח אשפה!'; vText.style.color = 'var(--danger)'; vIcon.innerText = '❌';
-            triggerHaptic('bad');
+            if(navigator.vibrate) navigator.vibrate(500);
         }
         
         resultBox.style.display = 'block';
@@ -458,10 +546,9 @@
     function saveDelivery() {
         if(!currentDelivery) return;
         shiftData.push(currentDelivery);
-        localStorage.setItem('woltShiftDataV5', JSON.stringify(shiftData));
+        localStorage.setItem('woltShiftDataV6', JSON.stringify(shiftData));
         
-        // הדלקת שעון משמרת אוטומטית אם המשתמש שומר משלוח והשעון לא רץ
-        if(!shiftStartTime) toggleShift();
+        if(!shiftCurrentStart && !isShiftPaused) toggleShift(); // Auto-start shift clock
 
         updateDashboard();
         
@@ -469,21 +556,26 @@
         if(isBatchedMode) document.getElementById('destination2').value = '';
         document.getElementById('pay').value = ''; document.getElementById('waitTime').value = '0';
         document.getElementById('resultBox').style.display = 'none';
+        
+        // Reset Conditions
+        if(isRain) toggleCondition('condRain');
+        if(isStairs) toggleCondition('condStairs');
+
         originCoords = null; dest1Coords = null; dest2Coords = null; currentDelivery = null;
     }
 
     function addExpense() {
-        const amt = prompt("כמה שילמת? (הכנס מספר, למשל 100 עבור דלק)");
+        const amt = prompt("כמה שילמת? (הכנס מספר)");
         if(!amt || isNaN(amt)) return;
-        const desc = prompt("על מה ההוצאה? (למשל: דלק, קפה, פנצ'ר)") || "הוצאה כללית";
+        const desc = prompt("על מה ההוצאה? (למשל: דלק, קפה)") || "הוצאה כללית";
         
         shiftData.push({ type: 'expense', desc: desc, netPay: -Math.abs(amt), time: 0 });
-        localStorage.setItem('woltShiftDataV5', JSON.stringify(shiftData));
+        localStorage.setItem('woltShiftDataV6', JSON.stringify(shiftData));
         updateDashboard();
     }
 
     function updateDashboard() {
-        let totalNetPay = 0; let deliveriesCount = 0; let historyHTML = '';
+        let totalNetPay = 0; let historyHTML = '';
 
         for(let i = shiftData.length - 1; i >= 0; i--) {
             let item = shiftData[i];
@@ -492,32 +584,24 @@
             if(item.type === 'expense') {
                 historyHTML += `
                     <li class="history-item expense-item">
-                        <div>
-                            <div style="font-weight:600; font-size:14px; color:var(--danger);">💸 ${item.desc}</div>
-                        </div>
+                        <div><div style="font-weight:600; font-size:14px; color:var(--danger);">💸 ${item.desc}</div></div>
                         <div style="font-size:18px; font-weight:800; color:var(--danger);">-₪${Math.abs(item.netPay).toFixed(0)}</div>
                     </li>`;
             } else {
-                deliveriesCount++;
                 historyHTML += `
                     <li class="history-item">
                         <div>
-                            <div style="font-weight:600; font-size:14px;">${item.origin} ➔ ${item.dest}</div>
-                            <div style="font-size:12px; opacity:0.7;">קצב חישוב: ₪${item.rate}/שעה</div>
+                            <div style="font-weight:600; font-size:14px;">${item.notes||''}${item.origin} ➔ ${item.dest}</div>
+                            <div style="font-size:12px; opacity:0.7;">חישוב שטחי: ₪${item.rate}/שעה</div>
                         </div>
                         <div style="font-size:18px; font-weight:800; color:var(--primary);">₪${item.netPay.toFixed(0)}</div>
                     </li>`;
             }
         }
 
-        // חישוב ממוצע אמיתי לפי שעון המשמרת!
         let realAvg = 0;
-        if(shiftStartTime) {
-            const hoursElapsed = (Date.now() - shiftStartTime) / (1000 * 60 * 60);
-            if(hoursElapsed > 0.05) { // מונע קפיצות מטורפות בדקות הראשונות
-                realAvg = totalNetPay / hoursElapsed;
-            }
-        }
+        const hoursElapsed = getTotalShiftHours();
+        if(hoursElapsed > 0.05) realAvg = totalNetPay / hoursElapsed;
 
         document.getElementById('dashTotalPay').innerText = '₪' + totalNetPay.toFixed(0);
         document.getElementById('dashRealAvg').innerText = '₪' + realAvg.toFixed(0);
@@ -534,18 +618,15 @@
             if(i.type==='expense') expenses += Math.abs(i.netPay);
         });
         
-        let hoursString = "לא הופעל שעון";
-        let finalAvg = 0;
-        if(shiftStartTime) {
-            const hours = (Date.now() - shiftStartTime) / (1000 * 60 * 60);
-            hoursString = hours.toFixed(1) + " שעות";
-            finalAvg = (totalNet / hours).toFixed(0);
-        }
+        const hours = getTotalShiftHours();
+        const hoursString = hours > 0 ? hours.toFixed(1) + " שעות" : "לא הופעל שעון";
+        const finalAvg = hours > 0 ? (totalNet / hours).toFixed(0) : 0;
 
         document.getElementById('modalStats').innerHTML = `
             מספר משלוחים: <strong style="color:var(--primary)">${count}</strong><br>
             זמן בשטח (לפי שעון): <strong>${hoursString}</strong><br>
-            סך הוצאות: <strong style="color:var(--danger)">₪${expenses}</strong><br><br>
+            סך הוצאות: <strong style="color:var(--danger)">₪${expenses}</strong><br>
+            בלאי שחושב לפי: <strong>₪${USER_COST_KM} לק"מ</strong><br><br>
             רווח נקי סופי: <strong style="color:var(--success); font-size:24px;">₪${totalNet.toFixed(0)}</strong><br>
             ממוצע אמיתי לשעה: <strong>₪${finalAvg}</strong>
         `;
@@ -555,15 +636,15 @@
     function exportToWhatsapp() {
         const statsText = document.getElementById('modalStats').innerText;
         const date = new Date().toLocaleDateString('he-IL');
-        const message = `*סיכום משמרת 18K - ${date}* 🚀\n\n${statsText}\n\nנשמר דרך האפליקציה!`;
+        const message = `*סיכום משמרת 18K - ${date}* 🚀\n\n${statsText}\n\nנשמר דרך אפליקציית הניהול שלי!`;
         const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
     }
 
     function confirmEndShift() {
         shiftData = []; 
-        localStorage.removeItem('woltShiftDataV5'); 
-        if(shiftStartTime) toggleShift(); // מכבה את השעון
+        localStorage.removeItem('woltShiftDataV6'); 
+        if(shiftCurrentStart || isShiftPaused) toggleShift(); // Stop clock totally
         updateDashboard();
         document.getElementById('shiftModal').style.display = 'none';
         window.scrollTo(0,0);
