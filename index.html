@@ -1,144 +1,184 @@
-import http.server
-import socketserver
-import webbrowser
-import threading
-import os
-import time
-
-HTML_CONTENT = """
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת ניהול משלוחים - טופ 18K</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#00c2e8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Wolt 18K Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --wolt-blue: #00c2e8; --wolt-dark: #0098b8; --success: #4caf50; --danger: #f44336; --warning: #ff9800; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .app-container { background-color: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); width: 100%; max-width: 450px; }
-        h2 { text-align: center; color: var(--wolt-blue); margin-top: 0; margin-bottom: 20px; font-size: 24px; }
-        
-        .card { background: #fdfdfd; border: 1px solid #eee; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; color: #444; font-size: 14px; }
-        
-        .input-wrapper { position: relative; }
-        input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 15px; transition: 0.2s; }
-        input:focus { border-color: var(--wolt-blue); outline: none; }
-        .autocomplete-list { 
-            list-style: none; padding: 0; margin: 0; position: absolute; top: 100%; left: 0; right: 0; 
-            background: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 1000; display: none; max-height: 180px; overflow-y: auto; 
+        :root { 
+            --primary: #00c2e8; --primary-dark: #0098b8; --bg: #f3f7f9; 
+            --surface: #ffffff; --text: #2d3436; --text-light: #636e72;
+            --success: #00b894; --warning: #fdcb6e; --danger: #ff7675;
+            --shadow: 0 8px 20px rgba(0,0,0,0.06);
+            --radius: 16px;
         }
-        .autocomplete-list li { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 14px; }
-        .autocomplete-list li:hover { background-color: #f0f8ff; color: var(--wolt-dark); font-weight: bold; }
         
-        button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-primary { background-color: var(--wolt-blue); color: white; margin-top: 10px; }
-        .btn-primary:hover { background-color: var(--wolt-dark); }
-        .btn-primary:disabled { background-color: #ccc; cursor: not-allowed; }
-        .btn-success { background-color: var(--success); color: white; margin-top: 15px; display: none; }
+        * { box-sizing: border-box; font-family: 'Heebo', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 40px; }
         
-        .result-box { margin-top: 15px; padding: 15px; border-radius: 8px; display: none; text-align: center; }
-        .good-job { background-color: #e8f5e9; border: 2px solid var(--success); }
-        .bad-job { background-color: #ffebee; border: 2px solid var(--danger); }
-        .ok-job { background-color: #fff3e0; border: 2px solid var(--warning); }
-        .rate-text { font-size: 26px; font-weight: 800; margin: 10px 0; }
-        .loader { display: none; text-align: center; margin-top: 10px; font-weight: bold; color: #666; font-size: 14px; }
+        /* Header */
+        header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 25px 20px; text-align: center; border-radius: 0 0 24px 24px; box-shadow: var(--shadow); margin-bottom: -20px; position: relative; z-index: 10; }
+        header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px; }
+        header p { margin: 5px 0 0; font-size: 14px; opacity: 0.9; }
 
-        .dashboard { background: #2c3e50; color: white; padding: 20px; border-radius: 12px; margin-top: 30px; }
-        .dash-title { text-align: center; font-size: 18px; margin-bottom: 15px; font-weight: bold; border-bottom: 1px solid #455a64; padding-bottom: 10px; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; }
-        .stat-box { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; }
-        .stat-value { font-size: 22px; font-weight: bold; color: var(--wolt-blue); margin-top: 5px; }
-        .stat-label { font-size: 12px; opacity: 0.8; }
+        .container { padding: 0 15px; max-width: 500px; margin: 0 auto; position: relative; z-index: 20; }
         
-        .history-section { margin-top: 20px; }
-        .history-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .history-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
-        .history-item { background: #f9f9f9; border-right: 4px solid var(--wolt-blue); padding: 10px; margin-bottom: 8px; border-radius: 4px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-        .clear-btn { background: none; border: none; color: var(--danger); font-size: 12px; cursor: pointer; padding: 0; font-weight: bold; }
+        /* Cards */
+        .card { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-top: 20px; }
+        
+        /* Inputs */
+        .form-group { margin-bottom: 16px; position: relative; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--text-light); }
+        input { width: 100%; padding: 14px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 16px; background: #fafbfc; transition: all 0.2s; }
+        input:focus { border-color: var(--primary); background: white; outline: none; box-shadow: 0 0 0 3px rgba(0, 194, 232, 0.15); }
+        .input-row { display: flex; gap: 12px; }
+        .input-row .form-group { flex: 1; }
+
+        /* Autocomplete */
+        .autocomplete-list { 
+            list-style: none; padding: 0; margin: 0; position: absolute; top: calc(100% + 4px); left: 0; right: 0; 
+            background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
+            z-index: 1000; display: none; max-height: 220px; overflow-y: auto; border: 1px solid #eee;
+        }
+        .autocomplete-list li { padding: 14px 16px; border-bottom: 1px solid #f1f2f6; font-size: 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .autocomplete-list li:last-child { border-bottom: none; }
+        .autocomplete-list li:active { background-color: #f0f8ff; }
+
+        /* Buttons */
+        button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 17px; font-weight: 800; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-primary { background-color: var(--primary); color: white; box-shadow: 0 4px 12px rgba(0, 194, 232, 0.3); margin-top: 10px; }
+        .btn-primary:active { transform: translateY(2px); }
+        .btn-primary:disabled { background-color: #b2bec3; box-shadow: none; }
+        .btn-success { background-color: var(--success); color: white; box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3); display: none; margin-top: 15px; }
+        .btn-danger-text { background: none; color: var(--danger); font-size: 13px; font-weight: 600; padding: 5px; box-shadow: none; width: auto; }
+
+        /* Result Area */
+        .result-box { margin-top: 20px; padding: 24px 20px; border-radius: var(--radius); display: none; text-align: center; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .good-job { background: linear-gradient(to bottom, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; }
+        .ok-job { background: linear-gradient(to bottom, #fffbeb, #fef3c7); border: 1px solid #fde68a; }
+        .bad-job { background: linear-gradient(to bottom, #fef2f2, #fee2e2); border: 1px solid #fecaca; }
+        
+        .verdict-header { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+        .rate-text { font-size: 36px; font-weight: 800; margin: 10px 0; color: var(--text); }
+        .details-pill { display: inline-block; background: rgba(0,0,0,0.05); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--text-light); }
+
+        /* Dashboard */
+        .dashboard { background: #1e272e; color: white; padding: 24px 20px; border-radius: var(--radius); margin-top: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px; }
+        .dash-title { font-size: 18px; font-weight: 800; margin: 0; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; text-align: center; }
+        .stat-value { font-size: 24px; font-weight: 800; color: white; margin-bottom: 4px; }
+        .stat-value.highlight { color: var(--success); }
+        .stat-label { font-size: 12px; color: #a4b0be; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* History */
+        .history-list { list-style: none; padding: 0; margin: 20px 0 0; max-height: 250px; overflow-y: auto; }
+        .history-item { background: rgba(255,255,255,0.05); padding: 14px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-right: 4px solid var(--primary); }
+        .history-item:last-child { margin-bottom: 0; }
+        .history-route { font-size: 14px; font-weight: 600; margin-bottom: 4px; line-height: 1.3; }
+        .history-meta { font-size: 12px; color: #a4b0be; }
+        .history-pay { font-size: 18px; font-weight: 800; color: var(--primary); }
+        
+        /* Loading Spinner */
+        .spinner { display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <h2>🛵 מחשבון החלטות אמת</h2>
-    
+<header>
+    <h1>🚀 18K Tracker Pro</h1>
+    <p>מערכת ניהול משלוחים חכמה</p>
+</header>
+
+<div class="container">
     <div class="card">
         <div class="form-group">
-            <label>איסוף (מסעדה):</label>
+            <label>📍 איסוף (מסעדה):</label>
             <div class="input-wrapper">
-                <input type="text" id="origin" placeholder="למשל: יגאל אלון" autocomplete="off" oninput="handleInput(this, 'origin-list', true)">
+                <input type="text" id="origin" placeholder="למשל: יגאל אלון 5" autocomplete="off" oninput="handleInput(this, 'origin-list', true)">
                 <ul id="origin-list" class="autocomplete-list"></ul>
             </div>
         </div>
+        
         <div class="form-group">
-            <label>יעד (לקוח):</label>
+            <label>🏠 יעד (לקוח):</label>
             <div class="input-wrapper">
-                <input type="text" id="destination" placeholder="למשל: נחל צאלים" autocomplete="off" oninput="handleInput(this, 'dest-list', false)">
+                <input type="text" id="destination" placeholder="למשל: נחל צאלים 12" autocomplete="off" oninput="handleInput(this, 'dest-list', false)">
                 <ul id="dest-list" class="autocomplete-list"></ul>
             </div>
         </div>
-        <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1;">
-                <label>תשלום מוצע:</label>
-                <input type="number" id="pay" placeholder="₪" step="0.1">
+        
+        <div class="input-row">
+            <div class="form-group">
+                <label>💰 תשלום מוצע:</label>
+                <input type="number" id="pay" placeholder="₪" inputmode="decimal" step="0.1">
             </div>
-            <div class="form-group" style="flex: 1;">
-                <label>המתנה במסעדה:</label>
-                <input type="number" id="waitTime" value="5">
+            <div class="form-group">
+                <label>⏱️ המתנה (דק'):</label>
+                <input type="number" id="waitTime" value="5" inputmode="numeric">
             </div>
         </div>
-        <button id="calcBtn" class="btn-primary" onclick="calculateDelivery()">חשב כדאיות משלוח</button>
-        <div id="loadingText" class="loader">📍 מחשב מסלול מול הלוויין...</div>
+        
+        <button id="calcBtn" class="btn-primary" onclick="calculateDelivery()">
+            <span id="calcText">חשב כדאיות משלוח</span>
+            <div id="calcSpinner" class="spinner"></div>
+        </button>
     </div>
 
     <div id="resultBox" class="result-box">
-        <div id="verdictIcon" style="font-size: 30px;"></div>
-        <div id="verdictText" style="font-weight: bold; font-size: 18px; margin-bottom: 5px;"></div>
-        <div>קצב רווח נקי:</div>
-        <div class="rate-text" id="resPerHour"></div>
-        <div style="font-size: 13px; color: #555;">
-            מרחק: <span id="resDist" style="font-weight:bold;"></span> | זמן כולל: <span id="resTotalTime" style="font-weight:bold;"></span>
+        <div class="verdict-header">
+            <span id="verdictIcon"></span> <span id="verdictText"></span>
         </div>
-        <button id="saveBtn" class="btn-success" onclick="saveDelivery()">📥 שמור משלוח ליומן</button>
+        <div style="font-size: 14px; font-weight: 600; color: var(--text-light); margin-top: 15px;">קצב רווח נקי מחושב:</div>
+        <div class="rate-text" id="resPerHour"></div>
+        <div class="details-pill">
+            מרחק: <span id="resDist"></span> | זמן: <span id="resTotalTime"></span>
+        </div>
+        <button id="saveBtn" class="btn-success" onclick="saveDelivery()">📥 הוסף למשמרת</button>
     </div>
 
     <div class="dashboard">
-        <div class="dash-title">📈 יומן משמרת פעילה</div>
+        <div class="dash-header">
+            <h3 class="dash-title">📊 יומן משמרת</h3>
+            <button class="btn-danger-text" onclick="clearShift()">נקה משמרת</button>
+        </div>
+        
         <div class="stats-grid">
             <div class="stat-box">
-                <div class="stat-label">רווח נקי מצטבר</div>
                 <div class="stat-value" id="dashTotalPay">₪0</div>
+                <div class="stat-label">רווח נקי</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">זמן עבודה נטו</div>
-                <div class="stat-value" id="dashTotalTime">0 דק'</div>
+                <div class="stat-value highlight" id="dashAvgRate">₪0</div>
+                <div class="stat-label">ממוצע שעתי</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">ממוצע שעתי נטו</div>
-                <div class="stat-value" id="dashAvgRate" style="color: #4caf50;">₪0</div>
+                <div class="stat-value" id="dashTotalTime" style="font-size: 20px;">0 דק'</div>
+                <div class="stat-label">זמן נטו</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">משלוחים הושלמו</div>
-                <div class="stat-value" id="dashCount">0</div>
+                <div class="stat-value" id="dashCount" style="font-size: 20px;">0</div>
+                <div class="stat-label">משלוחים</div>
             </div>
         </div>
-    </div>
 
-    <div class="history-section">
-        <div class="history-title">
-            <span>היסטוריית משלוחים (היום)</span>
-            <button class="clear-btn" onclick="clearShift()">מחק משמרת 🗑️</button>
-        </div>
         <ul class="history-list" id="historyList"></ul>
     </div>
 </div>
 
 <script>
+    // --- הגדרות ליבה ---
     const TARGET_HOURLY_RATE = 120; 
     const COST_PER_KM = 0.8; 
+    const SEARCH_LAT = 31.745; // קואורדינטות מרכז בית שמש
+    const SEARCH_LON = 34.990;
     
     let shiftData = [];
     let currentDelivery = null; 
@@ -146,23 +186,26 @@ HTML_CONTENT = """
     let destCoords = null;
     let debounceTimer;
 
+    // אתחול המערכת
     window.onload = () => {
-        const savedData = localStorage.getItem('woltShiftData');
+        const savedData = localStorage.getItem('woltShiftDataPro');
         if (savedData) {
             shiftData = JSON.parse(savedData);
             updateDashboard();
         }
         
+        // סגירת רשימות השלמה בלחיצה מחוץ להן
         document.addEventListener('click', function(e) {
             if(e.target.id !== 'origin') document.getElementById('origin-list').style.display = 'none';
             if(e.target.id !== 'destination') document.getElementById('dest-list').style.display = 'none';
         });
     };
 
+    // מנוע השלמה אוטומטית (Photon API ממוקד)
     async function handleInput(inputEl, listId, isOrigin) {
         clearTimeout(debounceTimer);
         const listEl = document.getElementById(listId);
-        const query = inputEl.value;
+        const query = inputEl.value.trim();
 
         if (isOrigin) originCoords = null;
         else destCoords = null;
@@ -174,7 +217,8 @@ HTML_CONTENT = """
 
         debounceTimer = setTimeout(async () => {
             try {
-                const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=31.745&lon=34.990&limit=5&lang=default`);
+                // חיפוש ברדיוס ממוקד
+                const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=${SEARCH_LAT}&lon=${SEARCH_LON}&limit=4&lang=default`);
                 const data = await res.json();
                 
                 listEl.innerHTML = '';
@@ -182,11 +226,14 @@ HTML_CONTENT = """
                     data.features.forEach(feature => {
                         const props = feature.properties;
                         let name = props.name || '';
-                        if (props.city) name += ', ' + props.city;
-                        else if (props.state) name += ', ' + props.state;
+                        if(props.street && props.name !== props.street) name += ' ' + props.street;
+                        if(props.city) name += ', ' + props.city;
                         
+                        // סינון תוצאות ריקות
+                        if(!name.trim()) return;
+
                         const li = document.createElement('li');
-                        li.innerText = name;
+                        li.innerHTML = `📍 ${name}`;
                         li.onclick = () => {
                             inputEl.value = name;
                             listEl.style.display = 'none';
@@ -196,31 +243,35 @@ HTML_CONTENT = """
                         };
                         listEl.appendChild(li);
                     });
-                    listEl.style.display = 'block';
+                    listEl.style.display = listEl.children.length > 0 ? 'block' : 'none';
                 } else {
                     listEl.style.display = 'none';
                 }
             } catch (e) {
-                console.error('שגיאה בטעינת כתובות', e);
+                console.error('שגיאת רשת', e);
             }
-        }, 400); 
+        }, 350); 
     }
 
+    // חישוב כדאיות (OSRM API)
     async function calculateDelivery() {
         const pay = parseFloat(document.getElementById('pay').value);
         const waitTime = parseInt(document.getElementById('waitTime').value) || 0;
 
         if(!originCoords || !destCoords || !pay) { 
-            alert('שים לב: חובה לבחור את הכתובות מתוך הרשימה שנפתחת ולהזין תשלום.'); 
+            alert('שים לב: חובה לבחור כתובת מתוך הרשימה (כדי שנדע נ"צ מדויק) ולהזין תשלום.'); 
             return; 
         }
 
         const btn = document.getElementById('calcBtn');
-        const loader = document.getElementById('loadingText');
+        const calcText = document.getElementById('calcText');
+        const spinner = document.getElementById('calcSpinner');
         const resultBox = document.getElementById('resultBox');
         
+        // מצב טעינה
         btn.disabled = true;
-        loader.style.display = 'block';
+        calcText.style.display = 'none';
+        spinner.style.display = 'block';
         resultBox.style.display = 'none';
         document.getElementById('saveBtn').style.display = 'none';
 
@@ -228,7 +279,7 @@ HTML_CONTENT = """
             const routeResponse = await fetch(`https://router.project-osrm.org/route/v1/driving/${originCoords.lon},${originCoords.lat};${destCoords.lon},${destCoords.lat}?overview=false`);
             const routeData = await routeResponse.json();
             
-            if (routeData.code !== 'Ok') throw new Error("שגיאה בחישוב המסלול. בדוק את הכתובות.");
+            if (routeData.code !== 'Ok') throw new Error("לא הצלחנו לחשב מסלול. נסה כתובת קרובה אחרת.");
 
             const distanceKm = routeData.routes[0].distance / 1000;
             const driveTimeMins = routeData.routes[0].duration / 60;
@@ -238,8 +289,8 @@ HTML_CONTENT = """
             const hourlyRate = (netPay / totalTimeMins) * 60;
             
             currentDelivery = {
-                origin: document.getElementById('origin').value.split(',')[0],
-                dest: document.getElementById('destination').value.split(',')[0],
+                origin: document.getElementById('origin').value.split(',')[0].substring(0, 15),
+                dest: document.getElementById('destination').value.split(',')[0].substring(0, 15),
                 pay: pay,
                 netPay: netPay,
                 dist: distanceKm.toFixed(1),
@@ -252,11 +303,14 @@ HTML_CONTENT = """
         } catch (error) {
             alert(error.message);
         } finally {
+            // שחרור מצב טעינה
             btn.disabled = false;
-            loader.style.display = 'none';
+            calcText.style.display = 'block';
+            spinner.style.display = 'none';
         }
     }
 
+    // הצגת תוצאות על המסך
     function displayResults(data) {
         const resultBox = document.getElementById('resultBox');
         document.getElementById('resDist').innerText = data.dist + ' ק"מ';
@@ -267,23 +321,28 @@ HTML_CONTENT = """
         const vIcon = document.getElementById('verdictIcon');
 
         if(data.rate >= TARGET_HOURLY_RATE) {
-            resultBox.className = 'result-box good-job'; vText.innerText = 'משלוח אש! קח מיד'; vText.style.color = 'var(--success)'; vIcon.innerText = '🔥';
+            resultBox.className = 'result-box good-job'; 
+            vText.innerText = 'משלוח זהב! קח מהר'; vText.style.color = 'var(--success)'; vIcon.innerText = '🔥';
         } else if (data.rate >= 90) {
-            resultBox.className = 'result-box ok-job'; vText.innerText = 'סביר. קח אם שקט'; vText.style.color = 'var(--warning)'; vIcon.innerText = '👍';
+            resultBox.className = 'result-box ok-job'; 
+            vText.innerText = 'משלוח סביר'; vText.style.color = '#d4a017'; vIcon.innerText = '👍';
         } else {
-            resultBox.className = 'result-box bad-job'; vText.innerText = 'פח אשפה. לדחות!'; vText.style.color = 'var(--danger)'; vIcon.innerText = '❌';
+            resultBox.className = 'result-box bad-job'; 
+            vText.innerText = 'הפסד זמן. תדחה!'; vText.style.color = 'var(--danger)'; vIcon.innerText = '❌';
         }
         
         resultBox.style.display = 'block';
-        document.getElementById('saveBtn').style.display = 'block'; 
+        document.getElementById('saveBtn').style.display = 'flex'; 
     }
 
+    // שמירת המשלוח ליומן
     function saveDelivery() {
         if(!currentDelivery) return;
         shiftData.push(currentDelivery);
-        localStorage.setItem('woltShiftData', JSON.stringify(shiftData));
+        localStorage.setItem('woltShiftDataPro', JSON.stringify(shiftData));
         updateDashboard();
         
+        // איפוס לחוויה חלקה
         document.getElementById('origin').value = '';
         document.getElementById('destination').value = '';
         document.getElementById('pay').value = '';
@@ -291,8 +350,12 @@ HTML_CONTENT = """
         originCoords = null;
         destCoords = null;
         currentDelivery = null;
+        
+        // גלילה למטה לראות את היומן
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
+    // עדכון הדאשבורד
     function updateDashboard() {
         if(shiftData.length === 0) {
             document.getElementById('dashTotalPay').innerText = '₪0';
@@ -315,10 +378,10 @@ HTML_CONTENT = """
             historyHTML += `
                 <li class="history-item">
                     <div>
-                        <strong>${item.origin} ➔ ${item.dest}</strong><br>
-                        <span style="color:#666;">${item.time} דק' | קצב: ₪${item.rate}/שעה</span>
+                        <div class="history-route">${item.origin} ➔ ${item.dest}</div>
+                        <div class="history-meta">${item.time} דק' | קצב: ₪${item.rate}</div>
                     </div>
-                    <div style="font-size:16px; font-weight:bold; color:var(--wolt-dark);">₪${item.netPay.toFixed(0)}</div>
+                    <div class="history-pay">₪${item.netPay.toFixed(0)}</div>
                 </li>
             `;
         }
@@ -332,46 +395,18 @@ HTML_CONTENT = """
         document.getElementById('historyList').innerHTML = historyHTML;
         
         const avgEl = document.getElementById('dashAvgRate');
-        avgEl.style.color = globalHourlyAvg >= TARGET_HOURLY_RATE ? 'var(--success)' : (globalHourlyAvg >= 90 ? 'var(--warning)' : '#ff5252');
+        avgEl.className = 'stat-value ' + (globalHourlyAvg >= TARGET_HOURLY_RATE ? 'highlight' : '');
+        avgEl.style.color = globalHourlyAvg < 90 ? '#ff7675' : '';
     }
 
+    // מחיקת יומן
     function clearShift() {
-        if(confirm("בטוח שאתה רוצה לאפס את המשמרת? (הנתונים יימחקו)")) {
+        if(shiftData.length > 0 && confirm("למחוק את נתוני המשמרת הנוכחית?")) {
             shiftData = [];
-            localStorage.removeItem('woltShiftData');
+            localStorage.removeItem('woltShiftDataPro');
             updateDashboard();
         }
     }
 </script>
 </body>
 </html>
-"""
-
-PORT = 8000
-FILE_NAME = "wolt_calculator_osm.html"
-
-def start_server():
-    Handler = http.server.SimpleHTTPRequestHandler
-    socketserver.TCPServer.allow_reuse_address = True 
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print(f"✅ השרת רץ ברקע על פורט {PORT}...")
-        httpd.serve_forever()
-
-if __name__ == "__main__":
-    print("🚀 מרים את המערכת החדשה...")
-    with open(FILE_NAME, "w", encoding="utf-8") as f:
-        f.write(HTML_CONTENT)
-    
-    server_thread = threading.Thread(target=start_server, daemon=True)
-    server_thread.start()
-    time.sleep(0.5)
-    
-    url = f"http://localhost:{PORT}/{FILE_NAME}"
-    webbrowser.open(url)
-    
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        if os.path.exists(FILE_NAME):
-            os.remove(FILE_NAME)
