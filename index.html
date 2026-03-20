@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#00c2e8" id="themeColorMeta">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Wolt 18K Elite</title>
+    <title>Wolt 18K Elite V4</title>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -15,7 +15,6 @@
             --shadow: 0 8px 20px rgba(0,0,0,0.06); --radius: 16px;
         }
         
-        /* Dark Mode Variables */
         body.dark-mode {
             --bg: #121212; --surface: #1e1e1e; --text: #f5f6fa; --text-light: #b2bec3; --border: #333;
             --shadow: 0 8px 20px rgba(0,0,0,0.4);
@@ -25,18 +24,15 @@
         * { box-sizing: border-box; font-family: 'Heebo', sans-serif; -webkit-tap-highlight-color: transparent; transition: background-color 0.3s, color 0.3s; }
         body { background-color: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 40px; }
         
-        /* Header & Dark Mode Toggle */
         header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 25px 20px 15px; text-align: center; border-radius: 0 0 24px 24px; box-shadow: var(--shadow); position: relative; }
         header h1 { margin: 0; font-size: 24px; font-weight: 800; }
         .theme-toggle { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.2); border: none; color: white; padding: 8px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; }
 
-        /* Goal Progress Bar */
         .goal-container { background: rgba(0,0,0,0.15); border-radius: 20px; padding: 3px; margin-top: 15px; position: relative; height: 24px; }
         .goal-bar { background: #00b894; height: 100%; border-radius: 20px; width: 0%; transition: width 0.5s ease; }
         .goal-text { position: absolute; top: 0; left: 0; right: 0; text-align: center; font-size: 12px; font-weight: bold; line-height: 24px; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 
         .container { padding: 0 15px; max-width: 500px; margin: -10px auto 0; position: relative; z-index: 20; }
-        
         .card { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-top: 20px; border: 1px solid var(--border); }
         
         .form-group { margin-bottom: 16px; position: relative; }
@@ -44,15 +40,17 @@
         input[type="text"], input[type="number"] { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 16px; background: transparent; color: var(--text); }
         input:focus { border-color: var(--primary); outline: none; }
         
-        /* Quick Buttons */
         .quick-btns { display: flex; gap: 5px; margin-top: 5px; }
         .quick-btn { flex: 1; padding: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-weight: bold; font-size: 14px; cursor: pointer; }
         .quick-btn:active { background: var(--primary); color: white; }
+        .timer-btn { background: rgba(0, 194, 232, 0.1); color: var(--primary); border: 1px solid var(--primary); }
+        .timer-btn.active { background: var(--danger); color: white; border-color: var(--danger); animation: pulse 1.5s infinite; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
         .checkbox-wrapper { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 14px; font-weight: 600; color: var(--warning); background: rgba(253, 203, 110, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(253, 203, 110, 0.3);}
         .checkbox-wrapper input { width: 18px; height: 18px; accent-color: var(--warning); }
 
-        /* Autocomplete */
         .autocomplete-list { list-style: none; padding: 0; margin: 0; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1000; display: none; max-height: 220px; overflow-y: auto; border: 1px solid var(--border); }
         .autocomplete-list li { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 15px; cursor: pointer; color: var(--text); }
         .autocomplete-list li:active { background-color: var(--bg); }
@@ -70,7 +68,6 @@
         
         .rate-text { font-size: 36px; font-weight: 800; margin: 10px 0; color: var(--text); }
 
-        /* Dashboard */
         .dashboard { background: #1e272e; color: white; padding: 24px 20px; border-radius: var(--radius); margin-top: 25px; }
         .dash-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -78,7 +75,13 @@
         .stat-value { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
         
         .history-list { list-style: none; padding: 0; margin: 20px 0 0; }
-        .history-item { background: rgba(255,255,255,0.05); padding: 14px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; border-right: 4px solid var(--primary); }
+        .history-item { background: rgba(255,255,255,0.05); padding: 14px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-right: 4px solid var(--primary); }
+        .expense-item { border-right-color: var(--danger); }
+        
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .modal-content { background: var(--surface); padding: 25px; border-radius: var(--radius); width: 90%; max-width: 400px; text-align: center; color: var(--text); }
+        .modal-content h3 { margin-top: 0; color: var(--primary); }
     </style>
 </head>
 <body>
@@ -86,7 +89,6 @@
 <header>
     <button class="theme-toggle" onclick="toggleDarkMode()">🌙 לילה</button>
     <h1>🚀 18K Elite</h1>
-    
     <div class="goal-container">
         <div class="goal-bar" id="goalBar"></div>
         <div class="goal-text" id="goalText">יעד יומי: 0 / 500 ש"ח</div>
@@ -127,10 +129,9 @@
             </div>
             <div class="form-group" style="flex: 1;">
                 <label>⏱️ המתנה (דק'):</label>
-                <input type="number" id="waitTime" value="5" inputmode="numeric">
+                <input type="number" id="waitTime" value="0" inputmode="numeric">
                 <div class="quick-btns">
-                    <button class="quick-btn" onclick="adjustValue('waitTime', 5)">+5</button>
-                    <button class="quick-btn" onclick="adjustValue('waitTime', -5)">-5</button>
+                    <button id="timerBtn" class="quick-btn timer-btn" onclick="toggleTimer()">⏱️ הפעל טיימר</button>
                 </div>
             </div>
         </div>
@@ -144,8 +145,9 @@
         </div>
         <div style="font-size: 14px; color: var(--text-light);">קצב רווח נקי מחושב:</div>
         <div class="rate-text" id="resPerHour"></div>
+        <div style="font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 5px;" id="resPerKm"></div>
         <div style="font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 10px;">
-            מרחק (כולל חזור אם סומן): <span id="resDist"></span> | זמן: <span id="resTotalTime"></span>
+            מרחק: <span id="resDist"></span> | זמן כולל: <span id="resTotalTime"></span>
         </div>
         
         <button id="wazeBtn" class="action-btn btn-waze" onclick="openWaze()">🚙 פתח ב-Waze ליעד</button>
@@ -155,7 +157,10 @@
     <div class="dashboard">
         <div class="dash-header">
             <h3 style="margin:0;">📊 יומן משמרת</h3>
-            <button style="background:none; color:#ff7675; border:none; font-weight:bold; cursor:pointer;" onclick="clearShift()">נקה משמרת 🗑️</button>
+            <div style="display:flex; gap:10px;">
+                <button style="background:var(--bg); color:var(--text); border:none; padding:5px 10px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="addExpense()">➖ הוצאה</button>
+                <button style="background:none; color:#ff7675; border:none; font-weight:bold; cursor:pointer;" onclick="endShift()">סיים משמרת</button>
+            </div>
         </div>
         
         <div class="stats-grid">
@@ -173,10 +178,19 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="shiftModal">
+    <div class="modal-content">
+        <h3>🏆 סיכום משמרת</h3>
+        <p id="modalStats" style="font-size:16px; line-height:1.6; font-weight:600;"></p>
+        <button class="action-btn btn-primary" onclick="confirmEndShift()">מחק נתונים והתחל חדש</button>
+        <button style="background:none; border:none; color:var(--text-light); margin-top:15px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('shiftModal').style.display='none'">ביטול</button>
+    </div>
+</div>
+
 <script>
     const TARGET_HOURLY_RATE = 120; 
     const COST_PER_KM = 0.8; 
-    const DAILY_GOAL = 500; // יעד יומי בשקלים
+    const DAILY_GOAL = 500; 
     
     let shiftData = [];
     let currentDelivery = null; 
@@ -184,16 +198,18 @@
     let destCoords = null;
     let debounceTimer;
 
+    // Timer logic
+    let timerInterval;
+    let timerSeconds = 0;
+    let isTimerRunning = false;
+
     window.onload = () => {
-        // Load Dark Mode pref
         if(localStorage.getItem('darkMode') === 'true') toggleDarkMode();
-        
         const savedData = localStorage.getItem('woltShiftDataElite');
         if (savedData) {
             shiftData = JSON.parse(savedData);
             updateDashboard();
         }
-        
         document.addEventListener('click', function(e) {
             if(e.target.id !== 'origin') document.getElementById('origin-list').style.display = 'none';
             if(e.target.id !== 'destination') document.getElementById('dest-list').style.display = 'none';
@@ -213,6 +229,35 @@
         el.value = val;
     }
 
+    function toggleTimer() {
+        const btn = document.getElementById('timerBtn');
+        const input = document.getElementById('waitTime');
+        
+        if(isTimerRunning) {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.innerText = '⏱️ הפעל טיימר';
+            btn.classList.remove('active');
+        } else {
+            timerSeconds = (parseFloat(input.value) || 0) * 60; // start from current input
+            isTimerRunning = true;
+            btn.classList.add('active');
+            
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                const mins = Math.floor(timerSeconds / 60);
+                input.value = mins;
+                btn.innerText = `🛑 עצור (${mins}:${(timerSeconds%60).toString().padStart(2, '0')})`;
+            }, 1000);
+        }
+    }
+
+    function triggerHaptic(type) {
+        if (!navigator.vibrate) return;
+        if (type === 'good') navigator.vibrate([100, 50, 100]); // Short double buzz
+        else if (type === 'bad') navigator.vibrate(500); // Long heavy buzz
+    }
+
     async function handleInput(inputEl, listId, isOrigin) {
         clearTimeout(debounceTimer);
         const listEl = document.getElementById(listId);
@@ -223,7 +268,6 @@
 
         debounceTimer = setTimeout(async () => {
             try {
-                // בית שמש coordinates
                 const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=31.745&lon=34.990&limit=4&lang=default`);
                 const data = await res.json();
                 
@@ -253,6 +297,8 @@
     }
 
     async function calculateDelivery() {
+        if(isTimerRunning) toggleTimer(); // Stop timer if calculating
+
         const pay = parseFloat(document.getElementById('pay').value);
         const waitTime = parseInt(document.getElementById('waitTime').value) || 0;
         const isReturnTrip = document.getElementById('returnTrip').checked;
@@ -265,23 +311,20 @@
         try {
             const routeResponse = await fetch(`https://router.project-osrm.org/route/v1/driving/${originCoords.lon},${originCoords.lat};${destCoords.lon},${destCoords.lat}?overview=false`);
             const routeData = await routeResponse.json();
-            
             if (routeData.code !== 'Ok') throw new Error("שגיאת מסלול.");
 
             let distanceKm = routeData.routes[0].distance / 1000;
             let driveTimeMins = routeData.routes[0].duration / 60;
             
-            // ענישה על נסיעה ריקה חזרה למרכז העניינים
-            if(isReturnTrip) {
-                distanceKm *= 2;
-                driveTimeMins *= 1.8; // לא מכפיל פי 2 בדיוק כי חזור ללא חיפוש חניה מהיר יותר
-            }
+            if(isReturnTrip) { distanceKm *= 2; driveTimeMins *= 1.8; }
 
             const totalTimeMins = Math.ceil(driveTimeMins + waitTime);
             const netPay = pay - (distanceKm * COST_PER_KM);
             const hourlyRate = (netPay / totalTimeMins) * 60;
+            const payPerKm = distanceKm > 0 ? (pay / distanceKm) : 0;
             
             currentDelivery = {
+                type: 'delivery',
                 origin: document.getElementById('origin').value.split(',')[0].substring(0, 15),
                 dest: document.getElementById('destination').value.split(',')[0].substring(0, 15),
                 destLat: destCoords.lat,
@@ -290,7 +333,8 @@
                 netPay: netPay,
                 dist: distanceKm.toFixed(1),
                 time: totalTimeMins,
-                rate: Math.round(hourlyRate)
+                rate: Math.round(hourlyRate),
+                ppk: payPerKm.toFixed(1)
             };
             
             displayResults(currentDelivery);
@@ -307,16 +351,19 @@
         document.getElementById('resDist').innerText = data.dist + ' ק"מ';
         document.getElementById('resTotalTime').innerText = data.time + " דק'";
         document.getElementById('resPerHour').innerText = '₪' + data.rate;
+        document.getElementById('resPerKm').innerText = `תמורה לקילומטר: ₪${data.ppk}`;
         
         const vText = document.getElementById('verdictText');
         const vIcon = document.getElementById('verdictIcon');
 
         if(data.rate >= TARGET_HOURLY_RATE) {
             resultBox.className = 'result-box good-job'; vText.innerText = 'זהב! קח מהר'; vText.style.color = 'var(--success)'; vIcon.innerText = '🔥';
+            triggerHaptic('good');
         } else if (data.rate >= 90) {
             resultBox.className = 'result-box ok-job'; vText.innerText = 'משלוח סביר'; vText.style.color = '#d4a017'; vIcon.innerText = '👍';
         } else {
             resultBox.className = 'result-box bad-job'; vText.innerText = 'פח אשפה!'; vText.style.color = 'var(--danger)'; vIcon.innerText = '❌';
+            triggerHaptic('bad');
         }
         
         resultBox.style.display = 'block';
@@ -325,9 +372,7 @@
     }
 
     function openWaze() {
-        if(currentDelivery) {
-            window.location.href = `waze://?ll=${currentDelivery.destLat},${currentDelivery.destLon}&navigate=yes`;
-        }
+        if(currentDelivery) window.location.href = `waze://?ll=${currentDelivery.destLat},${currentDelivery.destLon}&navigate=yes`;
     }
 
     function saveDelivery() {
@@ -336,27 +381,49 @@
         localStorage.setItem('woltShiftDataElite', JSON.stringify(shiftData));
         updateDashboard();
         
-        document.getElementById('origin').value = ''; document.getElementById('destination').value = ''; document.getElementById('pay').value = '';
+        document.getElementById('origin').value = ''; document.getElementById('destination').value = ''; document.getElementById('pay').value = ''; document.getElementById('waitTime').value = '0';
         document.getElementById('returnTrip').checked = false;
         document.getElementById('resultBox').style.display = 'none';
         originCoords = null; destCoords = null; currentDelivery = null;
     }
 
+    function addExpense() {
+        const amt = prompt("כמה שילמת? (הכנס מספר, למשל 100 עבור דלק)");
+        if(!amt || isNaN(amt)) return;
+        const desc = prompt("על מה ההוצאה? (למשל: דלק, קפה, פנצ'ר)") || "הוצאה כללית";
+        
+        shiftData.push({ type: 'expense', desc: desc, netPay: -Math.abs(amt), time: 0 });
+        localStorage.setItem('woltShiftDataElite', JSON.stringify(shiftData));
+        updateDashboard();
+    }
+
     function updateDashboard() {
-        let totalNetPay = 0; let totalMins = 0; let historyHTML = '';
+        let totalNetPay = 0; let totalMins = 0; let deliveriesCount = 0; let historyHTML = '';
 
         for(let i = shiftData.length - 1; i >= 0; i--) {
             let item = shiftData[i];
-            totalNetPay += item.netPay; totalMins += item.time;
-            historyHTML += `
-                <li class="history-item">
-                    <div>
-                        <div style="font-weight:600; font-size:14px;">${item.origin} ➔ ${item.dest}</div>
-                        <div style="font-size:12px; opacity:0.7;">${item.time} דק' | קצב: ₪${item.rate}</div>
-                    </div>
-                    <div style="font-size:18px; font-weight:800; color:var(--primary);">₪${item.netPay.toFixed(0)}</div>
-                </li>
-            `;
+            totalNetPay += item.netPay;
+            totalMins += item.time;
+            
+            if(item.type === 'expense') {
+                historyHTML += `
+                    <li class="history-item expense-item">
+                        <div>
+                            <div style="font-weight:600; font-size:14px; color:var(--danger);">💸 ${item.desc}</div>
+                        </div>
+                        <div style="font-size:18px; font-weight:800; color:var(--danger);">-₪${Math.abs(item.netPay).toFixed(0)}</div>
+                    </li>`;
+            } else {
+                deliveriesCount++;
+                historyHTML += `
+                    <li class="history-item">
+                        <div>
+                            <div style="font-weight:600; font-size:14px;">${item.origin} ➔ ${item.dest}</div>
+                            <div style="font-size:12px; opacity:0.7;">${item.time} דק' | קצב: ₪${item.rate}</div>
+                        </div>
+                        <div style="font-size:18px; font-weight:800; color:var(--primary);">₪${item.netPay.toFixed(0)}</div>
+                    </li>`;
+            }
         }
 
         const globalAvg = totalMins > 0 ? (totalNetPay / totalMins) * 60 : 0;
@@ -365,16 +432,41 @@
         document.getElementById('dashAvgRate').innerText = '₪' + globalAvg.toFixed(0);
         document.getElementById('historyList').innerHTML = historyHTML;
         
-        // עדכון בר ההתקדמות (יעד יומי)
-        let percent = Math.min(100, (totalNetPay / DAILY_GOAL) * 100);
+        let percent = Math.min(100, Math.max(0, (totalNetPay / DAILY_GOAL) * 100));
         document.getElementById('goalBar').style.width = percent + '%';
         document.getElementById('goalText').innerText = `יעד יומי: ${totalNetPay.toFixed(0)} / ${DAILY_GOAL} ש"ח`;
     }
 
-    function clearShift() {
-        if(confirm("למחוק את נתוני המשמרת הנוכחית?")) {
-            shiftData = []; localStorage.removeItem('woltShiftDataElite'); updateDashboard();
-        }
+    function endShift() {
+        if(shiftData.length === 0) { alert("אין נתונים למשמרת זו."); return; }
+        
+        let totalNet = 0; let totalMins = 0; let count = 0; let expenses = 0;
+        shiftData.forEach(i => { 
+            totalNet += i.netPay; 
+            totalMins += i.time; 
+            if(i.type==='delivery') count++; 
+            if(i.type==='expense') expenses += Math.abs(i.netPay);
+        });
+        
+        const hours = (totalMins / 60).toFixed(1);
+        const avg = totalMins > 0 ? ((totalNet / totalMins) * 60).toFixed(0) : 0;
+
+        document.getElementById('modalStats').innerHTML = `
+            מספר משלוחים: <strong style="color:var(--primary)">${count}</strong><br>
+            זמן על הכביש: <strong>${hours} שעות</strong><br>
+            סך הוצאות: <strong style="color:var(--danger)">₪${expenses}</strong><br><br>
+            רווח נקי סופי: <strong style="color:var(--success); font-size:24px;">₪${totalNet.toFixed(0)}</strong><br>
+            ממוצע לשעה: <strong>₪${avg}</strong>
+        `;
+        document.getElementById('shiftModal').style.display = 'flex';
+    }
+
+    function confirmEndShift() {
+        shiftData = []; 
+        localStorage.removeItem('woltShiftDataElite'); 
+        updateDashboard();
+        document.getElementById('shiftModal').style.display = 'none';
+        window.scrollTo(0,0);
     }
 </script>
 </body>
