@@ -21,6 +21,7 @@
             height: 100vh;
             overflow: hidden;
             color: white;
+            touch-action: manipulation;
         }
 
         .container {
@@ -103,15 +104,15 @@
 </head>
 <body>
 
-<div class="container">
+<form class="container" onsubmit="return false;">
     <div class="input-group">
         <label>תשלום (₪)</label>
-        <input type="number" id="fee" inputmode="numeric" placeholder="00" pattern="[0-9]*">
+        <input type="number" id="fee" inputmode="decimal" enterkeyhint="next" placeholder="00">
     </div>
 
     <div class="input-group">
         <label>מרחק (ק"מ)</label>
-        <input type="number" id="distance" inputmode="decimal" placeholder="0.0" pattern="[0-9]*">
+        <input type="number" id="distance" inputmode="decimal" enterkeyhint="done" placeholder="0.0">
     </div>
 
     <div id="result-area">
@@ -121,7 +122,7 @@
     </div>
     
     <div class="reset-hint">איוניק 2020 | דלק 8.0 | בלאי 0.45</div>
-</div>
+</form>
 
 <script>
     const feeInput = document.getElementById('fee');
@@ -131,32 +132,42 @@
     const statusDisp = document.getElementById('status-display');
     const statsDisp = document.getElementById('stats-display');
 
-    let jumpTimer;
-
-    // פונקציית המעבר האוטומטי
+    // קפיצה אוטומטית ברגע שהוקלדו 2 ספרות בדיוק (ללא השהייה)
     feeInput.addEventListener('input', () => {
-        const val = feeInput.value;
-        
-        // אם הוקלדו 2 ספרות (רוב המשלוחים), נחכה רגע ונקפוץ למרחק
-        clearTimeout(jumpTimer);
-        if (val.length >= 2) {
-            jumpTimer = setTimeout(() => {
-                distInput.focus();
-                distInput.select();
-            }, 500); 
+        if (feeInput.value.length === 2) {
+            distInput.focus();
         }
         calculate();
     });
 
+    // תמיכה בכפתור "הבא" או "Enter" במקלדת הנייד
+    feeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            distInput.focus();
+        }
+    });
+
     distInput.addEventListener('input', calculate);
+    distInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            distInput.blur(); // סוגר את המקלדת כדי לראות את התוצאה בגדול
+        }
+    });
 
     function calculate() {
         const fee = parseFloat(feeInput.value);
         const dist = parseFloat(distInput.value);
 
-        if (!fee || !dist) return;
+        if (!fee || !dist) {
+            profitDisp.innerText = "--";
+            statusDisp.innerText = "הזן נתונים";
+            statsDisp.innerText = "";
+            resultArea.style.backgroundColor = 'transparent';
+            return;
+        }
 
-        // לוגיקה של איוניק 2020
         const fuelCost = (dist / 20) * 8; 
         const maintCost = dist * 0.45;
         const totalExp = fuelCost + maintCost;
@@ -170,19 +181,17 @@
             statusDisp.innerText = "לקחת מהר!";
         } else if (net > (fee * 0.2)) {
             resultArea.style.backgroundColor = '#463a1e';
-            statusDisp.innerText = "סביר, אם אין משהו אחר";
+            statusDisp.innerText = "סביר";
         } else {
             resultArea.style.backgroundColor = '#461e1e';
             statusDisp.innerText = "לא לגעת!";
         }
     }
 
-    // בחירה אוטומטית של הטקסט בכניסה לשדה (למחיקה מהירה)
-    feeInput.addEventListener('focus', () => feeInput.select());
-    distInput.addEventListener('focus', () => distInput.select());
+    // סימון אוטומטי של המספר למחיקה מהירה בנגיעה
+    feeInput.addEventListener('focus', () => setTimeout(() => feeInput.select(), 10));
+    distInput.addEventListener('focus', () => setTimeout(() => distInput.select(), 10));
 
-    // מיקוד אוטומטי בטעינה
-    window.onload = () => feeInput.focus();
 </script>
 
 </body>
