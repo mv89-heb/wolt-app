@@ -2,8 +2,8 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון כדאיות וולט - איוניק 2020</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>מחשבון מהיר - איוניק 2020</title>
     <style>
         :root {
             --wolt-blue: #00c2e8;
@@ -15,122 +15,119 @@
             --white: #ffffff;
         }
 
+        /* מניעת זום אוטומטי בהקלדה בנייד */
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background-color: var(--light-gray);
+            background-color: var(--dark-gray); /* רקע כהה בחוץ כדי למקד את העין */
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             color: var(--dark-gray);
+            touch-action: manipulation; /* מונע זום כפול בטעות */
         }
 
         .card {
             background: var(--white);
-            width: 90%;
+            width: 95%;
             max-width: 400px;
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .header h1 {
-            color: var(--wolt-blue);
-            margin: 0;
-            font-size: 1.6rem;
-        }
-
-        .header p {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 5px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-sizing: border-box;
         }
 
         .input-box {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.2rem;
         }
 
         label {
             display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            font-size: 0.95rem;
+            margin-bottom: 0.3rem;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--wolt-blue);
         }
 
+        /* שדות הקלדה ענקיים לגישה מהירה */
         input {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #eef0f2;
+            padding: 15px;
+            border: 3px solid #eef0f2;
             border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.2s;
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
             box-sizing: border-box;
             background: #fdfdfd;
+            transition: all 0.1s;
         }
 
         input:focus {
             border-color: var(--wolt-blue);
             outline: none;
             background: #fff;
-            box-shadow: 0 0 0 4px rgba(0, 194, 232, 0.1);
+            box-shadow: 0 0 0 4px rgba(0, 194, 232, 0.2);
         }
 
         #result-container {
-            margin-top: 2rem;
+            margin-top: 1rem;
             display: none;
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .result-box {
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 15px;
             text-align: center;
-            transition: background-color 0.3s;
         }
 
         .stats {
-            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 0.5rem;
             font-size: 0.9rem;
             border-bottom: 1px solid rgba(0,0,0,0.05);
-            padding-bottom: 1rem;
+            padding-bottom: 0.5rem;
         }
 
-        .stat-row {
+        .stat-col {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.4rem;
+            flex-direction: column;
         }
 
         .final-profit {
-            font-size: 1.4rem;
-            font-weight: 800;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-top: 5px;
         }
 
         .badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 5px 15px;
             border-radius: 20px;
-            font-size: 0.8rem;
-            margin-top: 8px;
+            font-size: 1rem;
+            margin-top: 5px;
             font-weight: bold;
         }
 
-        .footer-info {
-            text-align: center;
-            font-size: 0.75rem;
-            color: #999;
-            margin-top: 2rem;
+        /* כפתור איפוס עצום */
+        .reset-btn {
+            width: 100%;
+            background: #f1f3f4;
+            color: #5f6368;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: background 0.2s;
+        }
+
+        .reset-btn:active {
+            background: #e0e0e0;
         }
 
         /* סגנונות לפי מצב כדאיות */
@@ -142,31 +139,27 @@
 <body>
 
 <div class="card">
-    <div class="header">
-        <h1>מחשבון רווח משלוחים</h1>
-        <p>יונדאי איוניק 2020</p>
+    
+    <div class="input-box">
+        <label for="fee">תשלום (₪)</label>
+        <input type="number" id="fee" inputmode="decimal" placeholder="0" oninput="calculate()" onclick="this.select()" autofocus>
     </div>
 
     <div class="input-box">
-        <label for="fee">סכום תשלום מהאפליקציה (₪)</label>
-        <input type="number" id="fee" placeholder="כמה תקבל על המשלוח?" step="0.1" oninput="calculate()">
-    </div>
-
-    <div class="input-box">
-        <label for="distance">מרחק נסיעה כולל (ק"מ)</label>
-        <input type="number" id="distance" placeholder="מרחק למסעדה + ללקוח" step="0.1" oninput="calculate()">
+        <label for="distance">מרחק (ק"מ)</label>
+        <input type="number" id="distance" inputmode="decimal" placeholder="0" oninput="calculate()" onclick="this.select()">
     </div>
 
     <div id="result-container">
         <div id="result-box" class="result-box">
             <div class="stats">
-                <div class="stat-row">
-                    <span>דלק (1:20):</span>
-                    <span id="fuel-val">₪0.00</span>
+                <div class="stat-col">
+                    <span>דלק</span>
+                    <strong id="fuel-val">₪0</strong>
                 </div>
-                <div class="stat-row">
-                    <span>בלאי, טיפולים וירידת ערך:</span>
-                    <span id="maint-val">₪0.00</span>
+                <div class="stat-col">
+                    <span>בלאי</span>
+                    <strong id="maint-val">₪0</strong>
                 </div>
             </div>
             <div class="final-profit" id="profit-val">₪0.00</div>
@@ -174,9 +167,8 @@
         </div>
     </div>
 
-    <div class="footer-info">
-        * מבוסס על 8 ₪ לליטר ועלות בלאי מוערכת של 0.45 ₪ לק"מ
-    </div>
+    <button class="reset-btn" onclick="resetApp()">נקה למשלוח הבא</button>
+
 </div>
 
 <script>
@@ -185,7 +177,6 @@
         const distanceInput = document.getElementById('distance').value;
         const container = document.getElementById('result-container');
         
-        // אם אחד מהשדות ריק, נסתיר את התוצאה ולא נבצע חישוב
         if (!feeInput || !distanceInput) {
             container.style.display = 'none';
             return;
@@ -194,39 +185,42 @@
         const fee = parseFloat(feeInput);
         const distance = parseFloat(distanceInput);
 
-        // פרמטרים מוגדרים מראש
-        const fuelPrice = 8.0;      // ש"ח לליטר
-        const kmPerLiter = 20;     // צריכה ממוצעת לאיוניק
-        const maintPerKm = 0.45;    // בלאי משוער לק"מ (צמיגים, ירידת ערך, טיפולים)
+        const fuelPrice = 8.0;      
+        const kmPerLiter = 20;     
+        const maintPerKm = 0.45;    
 
-        // חישובים
         const fuelCost = (distance / kmPerLiter) * fuelPrice;
         const maintCost = distance * maintPerKm;
         const totalExpenses = fuelCost + maintCost;
         const netProfit = fee - totalExpenses;
 
-        // עדכון התצוגה
-        document.getElementById('fuel-val').innerText = `₪${fuelCost.toFixed(2)}`;
-        document.getElementById('maint-val').innerText = `₪${maintCost.toFixed(2)}`;
-        document.getElementById('profit-val').innerText = `₪${netProfit.toFixed(2)}`;
+        document.getElementById('fuel-val').innerText = `₪${fuelCost.toFixed(1)}`;
+        document.getElementById('maint-val').innerText = `₪${maintCost.toFixed(1)}`;
+        document.getElementById('profit-val').innerText = `₪${netProfit.toFixed(1)}`;
         
         const box = document.getElementById('result-box');
         const badge = document.getElementById('status-badge');
         
-        container.style.display = 'block'; // הצגת התוצאה
+        container.style.display = 'block'; 
         
-        // לוגיקה לקביעת כדאיות
         box.className = 'result-box';
         if (netProfit > (fee * 0.55)) {
             box.classList.add('status-good');
-            badge.innerText = "משתלם מאוד!";
+            badge.innerText = "לקחת!";
         } else if (netProfit > (fee * 0.25)) {
             box.classList.add('status-mid');
-            badge.innerText = "משתלם חלקית";
+            badge.innerText = "סביר";
         } else {
             box.classList.add('status-bad');
-            badge.innerText = "לא כדאי!";
+            badge.innerText = "לדחות!";
         }
+    }
+
+    function resetApp() {
+        document.getElementById('fee').value = '';
+        document.getElementById('distance').value = '';
+        document.getElementById('result-container').style.display = 'none';
+        document.getElementById('fee').focus(); // מחזיר מיד את הסמן לשדה הראשון
     }
 </script>
 
