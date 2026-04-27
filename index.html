@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wolt FastCalc - Ioniq 2020</title>
+    <title>Wolt ProCalc - Ioniq</title>
     <style>
         :root {
             --wolt-blue: #00c2e8;
             --success: #2ecc71;
+            --warning: #f39c12;
             --danger: #e74c3c;
-            --dark: #1a1a1b;
+            --dark: #121212;
+            --card-bg: #1e1e1e;
         }
 
         body {
@@ -19,38 +21,43 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            overflow: hidden;
             color: white;
             touch-action: manipulation;
         }
 
         .container {
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             flex-grow: 1;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
+            flex: 1;
         }
 
         label {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: bold;
             margin-bottom: 5px;
             color: var(--wolt-blue);
         }
 
         input {
-            background: #2d2d2f;
-            border: 2px solid #3e3e41;
+            background: var(--card-bg);
+            border: 2px solid #333;
             border-radius: 12px;
             color: white;
-            padding: 20px;
-            font-size: 2.5rem;
+            padding: 15px 5px;
+            font-size: 2rem;
             text-align: center;
             font-weight: 900;
             width: 100%;
@@ -61,7 +68,28 @@
         input:focus {
             border-color: var(--wolt-blue);
             outline: none;
-            background: #38383a;
+            background: #252525;
+        }
+
+        /* כפתור חזור ריק */
+        .toggle-btn {
+            background: var(--card-bg);
+            border: 2px solid #333;
+            color: #888;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .toggle-btn.active {
+            background: #3d1b1b;
+            border-color: var(--danger);
+            color: #ff6b6b;
         }
 
         #result-area {
@@ -70,15 +98,23 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            border-radius: 20px;
-            margin-top: 10px;
-            transition: all 0.2s;
+            border-radius: 15px;
+            margin-top: 5px;
             text-align: center;
+            background: var(--card-bg);
+            border: 2px solid #333;
+        }
+
+        .hourly-wage {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 5px;
         }
 
         .profit-val {
-            font-size: 4rem;
+            font-size: 4.5rem;
             font-weight: 900;
+            line-height: 1;
         }
 
         .status-text {
@@ -86,111 +122,143 @@
             font-weight: bold;
             margin-top: 10px;
         }
-
-        .mini-stats {
-            font-size: 1rem;
-            opacity: 0.8;
-            margin-top: 5px;
-        }
-
-        .reset-hint {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: auto;
-            padding-bottom: 10px;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
 
 <form class="container" onsubmit="return false;">
+    
     <div class="input-group">
         <label>תשלום (₪)</label>
-        <input type="number" id="fee" inputmode="decimal" enterkeyhint="next" placeholder="00">
+        <input type="number" id="fee" inputmode="decimal" placeholder="00">
     </div>
 
-    <div class="input-group">
-        <label>מרחק (ק"מ)</label>
-        <input type="number" id="distance" inputmode="decimal" enterkeyhint="done" placeholder="0.0">
+    <div class="input-row">
+        <div class="input-group">
+            <label>מרחק (ק"מ)</label>
+            <input type="number" id="distance" inputmode="decimal" placeholder="0.0">
+        </div>
+        <div class="input-group">
+            <label>זמן (דק')</label>
+            <input type="number" id="minutes" inputmode="numeric" placeholder="00">
+        </div>
+    </div>
+
+    <div class="toggle-btn" id="dead-miles-btn" onclick="toggleDeadMiles()">
+        🚙 דורש נסיעה חזרה ריקה? (לא)
     </div>
 
     <div id="result-area">
+        <div class="hourly-wage" id="hourly-display">שכר שעתי: --</div>
         <div class="profit-val" id="profit-display">--</div>
         <div class="status-text" id="status-display">הזן נתונים</div>
-        <div class="mini-stats" id="stats-display"></div>
     </div>
-    
-    <div class="reset-hint">איוניק 2020 | דלק 8.0 | בלאי 0.45</div>
 </form>
 
 <script>
     const feeInput = document.getElementById('fee');
     const distInput = document.getElementById('distance');
+    const minInput = document.getElementById('minutes');
+    const deadMilesBtn = document.getElementById('dead-miles-btn');
     const resultArea = document.getElementById('result-area');
     const profitDisp = document.getElementById('profit-display');
+    const hourlyDisp = document.getElementById('hourly-display');
     const statusDisp = document.getElementById('status-display');
-    const statsDisp = document.getElementById('stats-display');
 
-    // קפיצה אוטומטית ברגע שהוקלדו 2 ספרות בדיוק (ללא השהייה)
-    feeInput.addEventListener('input', () => {
-        if (feeInput.value.length === 2) {
-            distInput.focus();
+    let hasDeadMiles = false;
+
+    function toggleDeadMiles() {
+        hasDeadMiles = !hasDeadMiles;
+        if (hasDeadMiles) {
+            deadMilesBtn.classList.add('active');
+            deadMilesBtn.innerText = "🚙 דורש נסיעה חזרה ריקה? (כן)";
+        } else {
+            deadMilesBtn.classList.remove('active');
+            deadMilesBtn.innerText = "🚙 דורש נסיעה חזרה ריקה? (לא)";
         }
+        calculate();
+    }
+
+    // מעברים אוטומטיים
+    feeInput.addEventListener('input', () => {
+        if (feeInput.value.length === 2) distInput.focus();
         calculate();
     });
 
-    // תמיכה בכפתור "הבא" או "Enter" במקלדת הנייד
-    feeInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            distInput.focus();
-        }
+    distInput.addEventListener('input', () => {
+        if (distInput.value.length >= 2) minInput.focus();
+        calculate();
     });
 
-    distInput.addEventListener('input', calculate);
-    distInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            distInput.blur(); // סוגר את המקלדת כדי לראות את התוצאה בגדול
-        }
-    });
+    minInput.addEventListener('input', calculate);
 
     function calculate() {
         const fee = parseFloat(feeInput.value);
         const dist = parseFloat(distInput.value);
+        const mins = parseFloat(minInput.value);
 
         if (!fee || !dist) {
-            profitDisp.innerText = "--";
-            statusDisp.innerText = "הזן נתונים";
-            statsDisp.innerText = "";
-            resultArea.style.backgroundColor = 'transparent';
+            resetDisplay();
             return;
         }
 
-        const fuelCost = (dist / 20) * 8; 
-        const maintCost = dist * 0.45;
+        // אם יש חזור ריק, מכפילים את המרחק לצורך חישוב הוצאות
+        const effectiveDist = hasDeadMiles ? dist * 2 : dist;
+
+        const fuelCost = (effectiveDist / 20) * 8; 
+        const maintCost = effectiveDist * 0.45;
         const totalExp = fuelCost + maintCost;
-        const net = fee - totalExp;
+        
+        // הפרשה תיאורטית של 10% למיסים וביטוח לאומי
+        const grossProfit = fee - totalExp;
+        const taxReserve = grossProfit > 0 ? grossProfit * 0.10 : 0;
+        const netProfit = grossProfit - taxReserve;
 
-        profitDisp.innerText = `₪${net.toFixed(1)}`;
-        statsDisp.innerText = `הוצאות: ₪${totalExp.toFixed(1)}`;
+        profitDisp.innerText = `₪${netProfit.toFixed(1)}`;
 
-        if (net > (fee * 0.5)) {
-            resultArea.style.backgroundColor = '#1e4620';
-            statusDisp.innerText = "לקחת מהר!";
-        } else if (net > (fee * 0.2)) {
-            resultArea.style.backgroundColor = '#463a1e';
-            statusDisp.innerText = "סביר";
+        // חישוב שכר שעתי (אם הוזן זמן)
+        if (mins > 0) {
+            const hourly = (netProfit / mins) * 60;
+            hourlyDisp.innerText = `שכר שעתי: ₪${hourly.toFixed(0)}`;
         } else {
-            resultArea.style.backgroundColor = '#461e1e';
-            statusDisp.innerText = "לא לגעת!";
+            hourlyDisp.innerText = `הוצאות נוכו: ₪${totalExp.toFixed(1)}`;
+        }
+
+        // צביעת הרקע לפי הכדאיות השעתית (או רווח נקי אם אין זמן)
+        if (mins > 0) {
+            const hourly = (netProfit / mins) * 60;
+            if (hourly >= 65) {
+                resultArea.style.backgroundColor = '#1e4620';
+                statusDisp.innerText = "משתלם מאוד!";
+            } else if (hourly >= 45) {
+                resultArea.style.backgroundColor = '#463a1e';
+                statusDisp.innerText = "סביר";
+            } else {
+                resultArea.style.backgroundColor = '#461e1e';
+                statusDisp.innerText = "לא משתלם!";
+            }
+        } else {
+            // אם לא הוזן זמן, נבדוק לפי היחס הישן
+            if (netProfit > (fee * 0.4)) {
+                resultArea.style.backgroundColor = '#1e4620';
+                statusDisp.innerText = "לקחת";
+            } else {
+                resultArea.style.backgroundColor = '#461e1e';
+                statusDisp.innerText = "גבולי / לא משתלם";
+            }
         }
     }
 
-    // סימון אוטומטי של המספר למחיקה מהירה בנגיעה
+    function resetDisplay() {
+        profitDisp.innerText = "--";
+        hourlyDisp.innerText = "שכר שעתי: --";
+        statusDisp.innerText = "הזן נתונים";
+        resultArea.style.backgroundColor = 'var(--card-bg)';
+    }
+
     feeInput.addEventListener('focus', () => setTimeout(() => feeInput.select(), 10));
     distInput.addEventListener('focus', () => setTimeout(() => distInput.select(), 10));
+    minInput.addEventListener('focus', () => setTimeout(() => minInput.select(), 10));
 
 </script>
 
