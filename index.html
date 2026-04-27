@@ -81,28 +81,6 @@
             box-shadow: 0 0 0 4px rgba(0, 194, 232, 0.1);
         }
 
-        button {
-            width: 100%;
-            background: var(--wolt-blue);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.1s, background 0.2s;
-            margin-top: 1rem;
-        }
-
-        button:hover {
-            background: #00accf;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
         #result-container {
             margin-top: 2rem;
             display: none;
@@ -118,6 +96,7 @@
             padding: 1.5rem;
             border-radius: 15px;
             text-align: center;
+            transition: background-color 0.3s;
         }
 
         .stats {
@@ -170,15 +149,13 @@
 
     <div class="input-box">
         <label for="fee">סכום תשלום מהאפליקציה (₪)</label>
-        <input type="number" id="fee" placeholder="כמה תקבל על המשלוח?" step="0.1">
+        <input type="number" id="fee" placeholder="כמה תקבל על המשלוח?" step="0.1" oninput="calculate()">
     </div>
 
     <div class="input-box">
         <label for="distance">מרחק נסיעה כולל (ק"מ)</label>
-        <input type="number" id="distance" placeholder="מרחק למסעדה + ללקוח" step="0.1">
+        <input type="number" id="distance" placeholder="מרחק למסעדה + ללקוח" step="0.1" oninput="calculate()">
     </div>
-
-    <button onclick="calculate()">חשב רווח נקי</button>
 
     <div id="result-container">
         <div id="result-box" class="result-box">
@@ -204,13 +181,18 @@
 
 <script>
     function calculate() {
-        const fee = parseFloat(document.getElementById('fee').value);
-        const distance = parseFloat(document.getElementById('distance').value);
+        const feeInput = document.getElementById('fee').value;
+        const distanceInput = document.getElementById('distance').value;
+        const container = document.getElementById('result-container');
         
-        if (!fee || !distance) {
-            alert("נא למלא את כל השדות");
+        // אם אחד מהשדות ריק, נסתיר את התוצאה ולא נבצע חישוב
+        if (!feeInput || !distanceInput) {
+            container.style.display = 'none';
             return;
         }
+
+        const fee = parseFloat(feeInput);
+        const distance = parseFloat(distanceInput);
 
         // פרמטרים מוגדרים מראש
         const fuelPrice = 8.0;      // ש"ח לליטר
@@ -228,11 +210,10 @@
         document.getElementById('maint-val').innerText = `₪${maintCost.toFixed(2)}`;
         document.getElementById('profit-val').innerText = `₪${netProfit.toFixed(2)}`;
         
-        const container = document.getElementById('result-container');
         const box = document.getElementById('result-box');
         const badge = document.getElementById('status-badge');
         
-        container.style.display = 'block';
+        container.style.display = 'block'; // הצגת התוצאה
         
         // לוגיקה לקביעת כדאיות
         box.className = 'result-box';
