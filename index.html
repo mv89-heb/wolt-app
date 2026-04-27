@@ -71,7 +71,6 @@
             background: #252525;
         }
 
-        /* כפתור חזור ריק */
         .toggle-btn {
             background: var(--card-bg);
             border: 2px solid #333;
@@ -130,17 +129,17 @@
     
     <div class="input-group">
         <label>תשלום (₪)</label>
-        <input type="number" id="fee" inputmode="decimal" placeholder="00">
+        <input type="number" id="fee" inputmode="decimal" enterkeyhint="next" placeholder="00">
     </div>
 
     <div class="input-row">
         <div class="input-group">
             <label>מרחק (ק"מ)</label>
-            <input type="number" id="distance" inputmode="decimal" placeholder="0.0">
+            <input type="number" id="distance" inputmode="decimal" enterkeyhint="next" placeholder="0.0">
         </div>
         <div class="input-group">
             <label>זמן (דק')</label>
-            <input type="number" id="minutes" inputmode="numeric" placeholder="00">
+            <input type="number" id="minutes" inputmode="numeric" enterkeyhint="done" placeholder="00">
         </div>
     </div>
 
@@ -179,18 +178,32 @@
         calculate();
     }
 
-    // מעברים אוטומטיים
-    feeInput.addEventListener('input', () => {
-        if (feeInput.value.length === 2) distInput.focus();
-        calculate();
-    });
-
-    distInput.addEventListener('input', () => {
-        if (distInput.value.length >= 2) minInput.focus();
-        calculate();
-    });
-
+    // חישוב בכל הקלדה
+    feeInput.addEventListener('input', calculate);
+    distInput.addEventListener('input', calculate);
     minInput.addEventListener('input', calculate);
+
+    // ניווט חכם עם המקלדת בלבד (בלי קפיצות פתאומיות)
+    feeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            distInput.focus();
+        }
+    });
+
+    distInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            minInput.focus();
+        }
+    });
+
+    minInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            minInput.blur(); // מעלים את המקלדת כדאי לראות את המסך המלא
+        }
+    });
 
     function calculate() {
         const fee = parseFloat(feeInput.value);
@@ -202,31 +215,21 @@
             return;
         }
 
-        // אם יש חזור ריק, מכפילים את המרחק לצורך חישוב הוצאות
         const effectiveDist = hasDeadMiles ? dist * 2 : dist;
-
         const fuelCost = (effectiveDist / 20) * 8; 
         const maintCost = effectiveDist * 0.45;
         const totalExp = fuelCost + maintCost;
         
-        // הפרשה תיאורטית של 10% למיסים וביטוח לאומי
         const grossProfit = fee - totalExp;
         const taxReserve = grossProfit > 0 ? grossProfit * 0.10 : 0;
         const netProfit = grossProfit - taxReserve;
 
         profitDisp.innerText = `₪${netProfit.toFixed(1)}`;
 
-        // חישוב שכר שעתי (אם הוזן זמן)
         if (mins > 0) {
             const hourly = (netProfit / mins) * 60;
             hourlyDisp.innerText = `שכר שעתי: ₪${hourly.toFixed(0)}`;
-        } else {
-            hourlyDisp.innerText = `הוצאות נוכו: ₪${totalExp.toFixed(1)}`;
-        }
-
-        // צביעת הרקע לפי הכדאיות השעתית (או רווח נקי אם אין זמן)
-        if (mins > 0) {
-            const hourly = (netProfit / mins) * 60;
+            
             if (hourly >= 65) {
                 resultArea.style.backgroundColor = '#1e4620';
                 statusDisp.innerText = "משתלם מאוד!";
@@ -238,13 +241,13 @@
                 statusDisp.innerText = "לא משתלם!";
             }
         } else {
-            // אם לא הוזן זמן, נבדוק לפי היחס הישן
+            hourlyDisp.innerText = `הוצאות: ₪${totalExp.toFixed(1)} | הפרשה למס: ₪${taxReserve.toFixed(1)}`;
             if (netProfit > (fee * 0.4)) {
                 resultArea.style.backgroundColor = '#1e4620';
                 statusDisp.innerText = "לקחת";
             } else {
                 resultArea.style.backgroundColor = '#461e1e';
-                statusDisp.innerText = "גבולי / לא משתלם";
+                statusDisp.innerText = "לא לגעת";
             }
         }
     }
@@ -256,6 +259,7 @@
         resultArea.style.backgroundColor = 'var(--card-bg)';
     }
 
+    // סימון אוטומטי של הטקסט למחיקה בנגיעה אחת
     feeInput.addEventListener('focus', () => setTimeout(() => feeInput.select(), 10));
     distInput.addEventListener('focus', () => setTimeout(() => distInput.select(), 10));
     minInput.addEventListener('focus', () => setTimeout(() => minInput.select(), 10));
